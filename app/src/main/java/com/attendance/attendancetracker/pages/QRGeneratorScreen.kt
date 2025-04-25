@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,34 +28,28 @@ fun QRGeneratorScreen(
             .fillMaxSize()
             .background(Color(0xFFECECEC))
     ) {
-        // Header
+        // Top bar with logo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Color(0xFF001E2F),
-                    RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp)
-                )
-                .padding(16.dp)
+                .background(Color(0xFF001E2F))
+                .padding(vertical = 24.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            // Logo
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(40.dp)
+                modifier = Modifier.size(48.dp)
             )
         }
-        
-        // Main content
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Course title with back button
+            // Title and Back Button
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -65,40 +58,52 @@ fun QRGeneratorScreen(
             ) {
                 IconButton(
                     onClick = onBackClick,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.arrow_ios_back_svgrepo_com),
                         contentDescription = "Back",
                         tint = Color(0xFF001E2F)
                     )
                 }
-                
+
                 Text(
                     text = courseName,
                     style = Typography.titleLarge.copy(
                         color = Color(0xFF001E2F),
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
-            
+
             // Teacher name
             Text(
                 text = "Teacher: $teacherName",
                 style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, bottom = 24.dp)
+                    .padding(start = 48.dp, bottom = 24.dp)
             )
-            
-            // QR Code
+
+            // QR Code Heading
+            Text(
+                text = "Scan the QR code for Attendance",
+                style = Typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF001E2F)
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // QR Code Card
             Card(
                 modifier = Modifier
                     .size(240.dp)
                     .padding(8.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -107,17 +112,18 @@ fun QRGeneratorScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with actual QR
                         contentDescription = "QR Code",
                         modifier = Modifier.size(200.dp)
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
+            // Footer instruction
             Text(
-                text = "Simply have the QR code when your students enter class to mark their attendance automatically!",
+                text = "Simply scan the QR code when you enter class to mark your attendance automatically!",
                 style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp)
