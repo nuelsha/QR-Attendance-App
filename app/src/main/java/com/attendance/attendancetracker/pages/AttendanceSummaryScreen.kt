@@ -29,7 +29,7 @@ fun AttendanceSummaryScreen(
     onAddNewStudentClick: () -> Unit = {}
 ) {
     var showSummaryDialog by remember { mutableStateOf(false) }
-    
+
     // Sample student data
     val students = listOf(
         Student("Unanias Tekeste", 85),
@@ -38,7 +38,7 @@ fun AttendanceSummaryScreen(
         Student("Kidanian Semere", 92),
         Student("Eyob Seyum", 85)
     )
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,14 +56,14 @@ fun AttendanceSummaryScreen(
         ) {
             // Logo
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(40.dp)
             )
         }
-        
+
         // Main content
         Column(
             modifier = Modifier
@@ -86,7 +86,7 @@ fun AttendanceSummaryScreen(
                         tint = Color(0xFF001E2F)
                     )
                 }
-                
+
                 Text(
                     text = sectionName,
                     style = Typography.titleLarge.copy(
@@ -95,15 +95,15 @@ fun AttendanceSummaryScreen(
                     )
                 )
             }
-            
+
             // Student list
             students.forEach { student ->
                 StudentAttendanceItem(student = student)
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Add New Student button
             Button(
                 onClick = onAddNewStudentClick,
@@ -123,12 +123,12 @@ fun AttendanceSummaryScreen(
             }
         }
     }
-    
+
     // Show attendance summary dialog
     LaunchedEffect(Unit) {
         showSummaryDialog = true
     }
-    
+
     if (showSummaryDialog) {
         AttendanceSummaryDialog(
             onDismiss = { showSummaryDialog = false }
@@ -165,7 +165,7 @@ fun AttendanceSummaryDialog(
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    
+
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier.size(24.dp)
@@ -177,9 +177,9 @@ fun AttendanceSummaryDialog(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Student summary
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -199,9 +199,9 @@ fun AttendanceSummaryDialog(
                             style = Typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.width(12.dp))
-                    
+
                     Column {
                         Text(
                             text = "Teshome Chane",
@@ -210,7 +210,7 @@ fun AttendanceSummaryDialog(
                                 fontWeight = FontWeight.Medium
                             )
                         )
-                        
+
                         Text(
                             text = "teshome.chane@example.com",
                             style = Typography.bodySmall.copy(
@@ -219,9 +219,9 @@ fun AttendanceSummaryDialog(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Attendance stats
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -232,16 +232,16 @@ fun AttendanceSummaryDialog(
                         value = "70%",
                         color = Color(0xFF4CAF50)
                     )
-                    
+
                     AttendanceStatItem(
                         label = "Absent",
                         value = "30%",
                         color = Color(0xFFE53935)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Attendance calendar
                 Text(
                     text = "Attendance Calendar",
@@ -251,25 +251,16 @@ fun AttendanceSummaryDialog(
                     ),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
+
                 // Calendar grid
                 AttendanceCalendarGrid(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
                 )
-                
+
                 // Legend
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    LegendItem(color = Color(0xFF4CAF50), text = "Present")
-                    LegendItem(color = Color(0xFFFFB74D), text = "Excuse")
-                    LegendItem(color = Color(0xFFE53935), text = "Absent")
-                }
+
             }
         }
     }
@@ -300,9 +291,9 @@ fun AttendanceStatItem(
                 )
             )
         }
-        
+
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         Text(
             text = label,
             style = Typography.bodySmall.copy(

@@ -1,8 +1,8 @@
 package com.attendance.attendancetracker.pages
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,35 +29,35 @@ fun StudentHomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFECECEC))
+            .background(Color(0xFFF5F5F5)) // Lighter background to match image
     ) {
-        // Header with logo and refresh button
+        // Header with logo and menu button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Color(0xFF001E2F),
-                    RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp)
-                )
+                .background(Color(0xFF001E2F))
                 .padding(16.dp)
         ) {
             // Logo
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Logo",
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .size(40.dp)
-            )
+            Row(
+                modifier = Modifier.align(Alignment.CenterStart),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "SCANIN Logo",
+                    modifier = Modifier.size(32.dp)
+                )
+            }
 
-            // Refresh button
+            // Menu button
             IconButton(
-                onClick = { /* Refresh data */ },
+                onClick = { /* Open menu */ },
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Refresh",
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Menu",
                     tint = Color.White
                 )
             }
@@ -68,7 +67,7 @@ fun StudentHomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             // Greeting
@@ -86,7 +85,7 @@ fun StudentHomeScreen(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
             // Course grid
@@ -104,7 +103,7 @@ fun StudentHomeScreen(
 
                 CourseCard(
                     title = "Operating System",
-                    teacher = "Senayit Demisse",
+                    teacher = "Eshetu Demisse",
                     modifier = Modifier.weight(1f),
                     onCardClick = { onCourseClick("Operating System") },
                     onScanClick = { onScanClick("Operating System") }
@@ -157,20 +156,20 @@ fun StudentHomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Main scan button
             Button(
-                onClick = { onScanClick("Cyber Security") }, // Default to Cyber Security
+                onClick = { /* Global scan */ },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F)),
                 shape = RoundedCornerShape(50),
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
+                    .align(Alignment.End)
                     .width(120.dp)
                     .height(48.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    painter = painterResource(id = R.drawable.logo),
                     contentDescription = "Scan",
                     modifier = Modifier.size(20.dp)
                 )
@@ -190,9 +189,8 @@ fun CourseCard(
     onScanClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier
-            .clickable { onCardClick() },
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F))
     ) {
         Column(
@@ -228,6 +226,7 @@ fun CourseCard(
                     ),
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                     shape = RoundedCornerShape(50),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
@@ -246,10 +245,11 @@ fun CourseCard(
                     ),
                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                     shape = RoundedCornerShape(50),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Scan",
                         modifier = Modifier.size(16.dp)
                     )
