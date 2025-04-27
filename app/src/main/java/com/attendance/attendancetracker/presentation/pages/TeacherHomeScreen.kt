@@ -1,4 +1,4 @@
-package com.attendance.attendancetracker.pages
+package com.attendance.attendancetracker.presentation.pages
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image

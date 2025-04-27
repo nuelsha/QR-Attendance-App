@@ -1,4 +1,4 @@
-package com.attendance.attendancetracker.models
+package com.attendance.attendancetracker.data.models
 
 data class Student(
     val name: String,

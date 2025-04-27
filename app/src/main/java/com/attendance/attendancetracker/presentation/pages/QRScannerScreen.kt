@@ -1,4 +1,4 @@
-package com.attendance.attendancetracker.pages
+package com.attendance.attendancetracker.presentation.pages
 
 import android.Manifest
 import android.content.pm.PackageManager

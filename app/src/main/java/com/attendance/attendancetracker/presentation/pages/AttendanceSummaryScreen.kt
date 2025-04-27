@@ -1,4 +1,4 @@
-package com.attendance.attendancetracker.pages
+package com.attendance.attendancetracker.presentation.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.attendance.attendancetracker.R
-import com.attendance.attendancetracker.models.Student
+import com.attendance.attendancetracker.data.models.Student
 import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable

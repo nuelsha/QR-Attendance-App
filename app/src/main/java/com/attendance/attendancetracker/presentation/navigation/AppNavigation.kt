@@ -8,7 +8,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.attendance.attendancetracker.pages.*
+import com.attendance.attendancetracker.presentation.pages.AttendanceSummaryScreen
+import com.attendance.attendancetracker.presentation.pages.CourseDashboardScreen
+import com.attendance.attendancetracker.presentation.pages.LoginScreen
+import com.attendance.attendancetracker.presentation.pages.OnboardingScreen
+import com.attendance.attendancetracker.presentation.pages.QRGeneratorScreen
+import com.attendance.attendancetracker.presentation.pages.QRScannerScreen
+import com.attendance.attendancetracker.presentation.pages.SectionDetailScreen
+import com.attendance.attendancetracker.presentation.pages.SignUpScreen
+import com.attendance.attendancetracker.presentation.pages.StudentHomeScreen
+import com.attendance.attendancetracker.presentation.pages.TeacherHomeScreen
 
 object Routes {
     const val ONBOARDING = "onboarding"
