@@ -1,4 +1,4 @@
-package com.attendance.attendancetracker.presentation.pages
+ package com.attendance.attendancetracker.presentation.pages
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -41,38 +41,43 @@ fun SignUpScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 32.dp),
-            horizontalAlignment = Alignment.Start
+                .padding(start = 24.dp, top = 34.dp, end = 24.dp, bottom = 62.dp)
         ) {
-            // Logo
+            // Logo (aligned to start)
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
                 contentDescription = "Logo",
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(85.dp)
+                    .align(Alignment.Start)
                     .padding(bottom = 24.dp)
             )
 
-            // Sign Up text
-            Text(
-                text = "Sign Up to Get Started",
-                style = Typography.titleLarge.copy(
-                    color = Color.White,
+            // Centered content
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Sign Up text
+                Text(
+                    text = "Sign Up to Get Started",
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp
-                ),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-            // Subtitle
-            Text(
-                text = "Sign up to track your attendance and manage your records",
-                style = Typography.bodyMedium.copy(
-                    color = Color.White.copy(alpha = 0.8f)
-                ),
-                textAlign = TextAlign.Center
-            )
+                // Subtitle
+                Text(
+                    text = "Sign up to track your attendance and manage your records",
+                    fontSize = 16.sp,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
+
 
         // Card with form fields
         Card(
@@ -104,7 +109,7 @@ fun SignUpScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.arrow_ios_back_svgrepo_com),
+                            painter = painterResource(id = R.drawable.ph_student_light),
                             contentDescription = null,
                             tint = if (selectedRole == "Student") Color.White else Color(0xFF001E2F),
                             modifier = Modifier.size(16.dp)
@@ -127,7 +132,7 @@ fun SignUpScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ph_chalkboard_teacher_light),
                             contentDescription = null,
                             tint = if (selectedRole == "Teacher") Color.White else Color(0xFF001E2F),
                             modifier = Modifier.size(16.dp)

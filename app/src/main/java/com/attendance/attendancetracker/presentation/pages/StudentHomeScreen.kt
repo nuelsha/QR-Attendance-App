@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.attendance.attendancetracker.R
 import com.attendance.attendancetracker.ui.theme.Typography
 
@@ -44,9 +45,9 @@ fun StudentHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
+                    painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
                     contentDescription = "SCANIN Logo",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(52.dp)
                 )
             }
 
@@ -56,7 +57,7 @@ fun StudentHomeScreen(
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.logo),
+                    painter = painterResource(id = R.drawable.logeout),
                     contentDescription = "Menu",
                     tint = Color.White
                 )
@@ -80,7 +81,15 @@ fun StudentHomeScreen(
             )
 
             Text(
-                text = "Ready To Attend Today?",
+                text = "Ready To Attend",
+                style = Typography.titleLarge.copy(
+                    color = Color(0xFF001E2F),
+                    fontWeight = FontWeight.Bold
+                )
+            )
+
+            Text(
+                text = "Today?",
                 style = Typography.titleLarge.copy(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
@@ -179,7 +188,6 @@ fun StudentHomeScreen(
         }
     }
 }
-
 @Composable
 fun CourseCard(
     title: String,
@@ -189,30 +197,30 @@ fun CourseCard(
     onScanClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Text(
                 text = title,
-                style = Typography.titleMedium.copy(color = Color.White),
+                style = Typography.labelLarge.copy(color = Color.White),
                 modifier = Modifier.padding(bottom = 4.dp)
             )
 
             Text(
                 text = "Teacher:",
-                style = Typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f))
+                style = Typography.labelSmall.copy(color = Color.White.copy(alpha = 0.7f))
             )
 
             Text(
                 text = teacher,
-                style = Typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.9f)),
-                modifier = Modifier.padding(bottom = 16.dp)
+                style = Typography.bodySmall.copy(color = Color.White.copy(alpha = 0.9f)),
+                modifier = Modifier.padding(bottom = 12.dp)
             )
 
             Row(
@@ -220,43 +228,47 @@ fun CourseCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
-                    onClick = { onCardClick() },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                    onClick = onCardClick,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, Color.White),
                     shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.dash), // Use proper dashboard icon
                         contentDescription = "Dashboard",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(10.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Dashboard", style = Typography.bodySmall)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Dashboard",
+                        style = Typography.bodySmall.copy(fontSize = 8.sp)
+                    )
                 }
 
                 OutlinedButton(
-                    onClick = { onScanClick() },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White
-                    ),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                    onClick = onScanClick,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, Color.White),
                     shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.logo),
+                        painter = painterResource(id = R.drawable.qr), // Use proper scan icon (or custom if needed)
                         contentDescription = "Scan",
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(12.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Scan", style = Typography.bodySmall)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Scan",
+                        style = Typography.bodySmall.copy(fontSize = 12.sp)
+                    )
                 }
             }
+
+
         }
     }
 }

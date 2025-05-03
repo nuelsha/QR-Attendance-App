@@ -2,6 +2,7 @@ package com.attendance.attendancetracker.presentation.pages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -35,7 +36,7 @@ fun CourseDashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(Color.White)
             .verticalScroll(rememberScrollState())
     ) {
         // Header with logo
@@ -82,7 +83,7 @@ private fun AppHeader() {
             .padding(16.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
             contentDescription = "App Logo",
             modifier = Modifier.size(32.dp)
         )
@@ -95,36 +96,33 @@ private fun CourseHeader(
     teacherName: String,
     onBackClick: () -> Unit
 ) {
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 4.dp)
-        ) {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.arrow_ios_back_svgrepo_com),
-                    contentDescription = "Back",
-                    tint = Color(0xFF001E2F)
-                )
-            }
-
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 16.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.arrow_ios_back_svgrepo_com),
+            contentDescription = "Back",
+            tint = Color(0xFF001E2F),
+            modifier = Modifier.clickable { onBackClick() }
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column {
             Text(
                 text = courseName,
-                style = Typography.titleLarge.copy(
+                style = Typography.titleMedium.copy(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
                 )
             )
+            
+            Text(
+                text = "Teacher: $teacherName",
+                style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
+            )
         }
-
-        Text(
-            text = "Teacher: $teacherName",
-            style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
-            modifier = Modifier.padding(start = 24.dp)
-        )
     }
 }
 
@@ -137,20 +135,20 @@ private fun TrackingSummarySection(
         // Section title
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.calendar),
                 contentDescription = "Calendar",
                 tint = Color(0xFF001E2F),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(16.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
                 text = "Tracking Summary",
-                style = Typography.titleMedium.copy(
+                style = Typography.bodyMedium.copy(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
                 )
@@ -186,18 +184,18 @@ private fun AttendanceStatCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEEEEEE))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
                     .background(Color(0xFF001E2F)),
                 contentAlignment = Alignment.Center
@@ -205,18 +203,19 @@ private fun AttendanceStatCard(
                 Icon(
                     painter = painterResource(id = iconRes),
                     contentDescription = title,
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp)
+                    .padding(start = 12.dp)
             ) {
                 Text(
                     text = title,
-                    style = Typography.titleMedium.copy(
+                    style = Typography.bodyMedium.copy(
                         color = Color(0xFF001E2F),
                         fontWeight = FontWeight.Bold
                     )
@@ -230,7 +229,7 @@ private fun AttendanceStatCard(
 
             Text(
                 text = "$percentage%",
-                style = Typography.titleLarge.copy(
+                style = Typography.titleMedium.copy(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
                 )
@@ -249,50 +248,26 @@ private fun AttendanceReportSection(
         // Section title
         Text(
             text = "Attendance Report",
-            style = Typography.titleMedium.copy(
+            style = Typography.bodyMedium.copy(
                 color = Color(0xFF001E2F),
                 fontWeight = FontWeight.Bold
             ),
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
-
-        // Compact button row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            CompactAttendanceButton(
-                text = "Present",
-                color = Color(0xFF001E2F),
-                onClick = onPresentClick
-            )
-            CompactAttendanceButton(
-                text = "Excuse",
-                color = Color(0xFFFFB74D),
-                onClick = onExcuseClick
-            )
-            CompactAttendanceButton(
-                text = "Absent",
-                color = Color(0xFFE53935),
-                onClick = onAbsentClick
-            )
-        }
 
         // Calendar grid with smaller cells
         AttendanceCalendarGrid(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
+                .padding(bottom = 8.dp)
         )
 
         // Compact legend
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             CompactLegendItem(color = Color(0xFF001E2F), text = "Present")
             CompactLegendItem(color = Color(0xFFFFB74D), text = "Excuse")
@@ -325,22 +300,22 @@ private fun CompactAttendanceButton(
 
 @Composable
 fun AttendanceCalendarGrid(modifier: Modifier) {
+    // Based on the image, create a 4x5 grid of attendance data
     val attendanceData = listOf(
         listOf(1, 1, 1, 1, 1), // 1 = Present
         listOf(1, 1, 3, 1, 1), // 3 = Absent
-        listOf(1, 1, 1, 3, 1),
-        listOf(1, 1, 1, 1, 1),
-        listOf(1, 0, 0, 0, 0)  // 0 = Empty
+        listOf(1, 1, 2, 1, 1), // 2 = Excuse
+        listOf(1, 1, 1, 3, 1)
     )
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         attendanceData.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 row.forEach { status ->
                     val color = when (status) {
@@ -354,7 +329,7 @@ fun AttendanceCalendarGrid(modifier: Modifier) {
                         modifier = Modifier
                             .weight(1f)
                             .aspectRatio(1f)
-                            .background(color, RoundedCornerShape(2.dp))
+                            .background(color, RoundedCornerShape(4.dp))
                     )
                 }
             }
@@ -369,7 +344,7 @@ private fun CompactLegendItem(color: Color, text: String) {
     ) {
         Box(
             modifier = Modifier
-                .size(10.dp)
+                .size(12.dp)
                 .background(color, RoundedCornerShape(2.dp))
         )
 
@@ -377,7 +352,7 @@ private fun CompactLegendItem(color: Color, text: String) {
 
         Text(
             text = text,
-            style = Typography.labelSmall.copy(color = Color(0xFF4A6572))
+            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
         )
     }
 }
@@ -389,16 +364,16 @@ private fun ScanButton(onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F)),
         shape = RoundedCornerShape(50),
         modifier = Modifier
-            .width(120.dp)
-            .height(48.dp)
+            .width(100.dp)
+            .height(40.dp)
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = R.drawable.qr),
             contentDescription = "Scan",
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(16.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text("Scan")
+        Spacer(modifier = Modifier.width(4.dp))
+        Text("Scan", style = Typography.bodySmall)
     }
 }
 

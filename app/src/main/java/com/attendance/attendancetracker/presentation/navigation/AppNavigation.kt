@@ -165,9 +165,9 @@ fun AppNavigation(
             SectionDetailScreen(
                 sectionName = sectionName,
                 onBackClick = { navController.popBackStack() },
-                onAddNewStudentClick = {
-                    // In a real app, you would navigate to a form to add a new student
-                },
+//                onAddNewStudentClick = {
+//                    // In a real app, you would navigate to a form to add a new student
+//                },
                 onGenerateQRClick = { courseName ->
                     navController.navigate(Routes.qrGenerator(courseName))
                 }

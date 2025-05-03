@@ -41,19 +41,21 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 32.dp),
-            contentAlignment = Alignment.Center
+                .padding(top = 10.dp),
+            contentAlignment = Alignment.TopStart
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
                 contentDescription = "Logo",
-                modifier = Modifier.size(80.dp) // Increased size
+                modifier = Modifier
+                    .size(90.dp) // Adjusted size
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp) // Horizontal padding
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Welcome text
+// Welcome text
         Text(
             text = "Welcome Back",
             style = Typography.titleLarge.copy(
@@ -64,7 +66,7 @@ fun LoginScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Subtitle
+// Subtitle
         Text(
             text = "Log in to track your attendance, manage records, and stay updated.",
             style = Typography.bodyMedium.copy(
@@ -74,7 +76,8 @@ fun LoginScreen(
             modifier = Modifier.padding(horizontal = 24.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+
+        Spacer(modifier = Modifier.height(82.dp))
 
         // Card with form fields
         Card(
@@ -164,7 +167,7 @@ fun LoginScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+
             }
         }
     }

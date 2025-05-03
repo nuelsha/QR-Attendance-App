@@ -3,177 +3,172 @@ package com.attendance.attendancetracker.presentation.pages
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.attendance.attendancetracker.R
 import com.attendance.attendancetracker.ui.theme.Typography
 
+data class ClassSection(val name: String, val studentCount: Int)
+
 @Composable
 fun TeacherHomeScreen(
-    teacherName: String = "Senayit Demisse",
+    classSections: List<ClassSection> = listOf(
+        ClassSection("Section 1", 51),
+        ClassSection("Section 2", 49),
+        ClassSection("Section 3", 50),
+        ClassSection("Section 4", 50),
+        ClassSection("Section 5", 50),
+    ),
     onSectionClick: (String) -> Unit = {},
-    onAddNewClassClick: () -> Unit = {}
+    onAddNewClassClick: (String) -> Unit = {}
 ) {
-    Column(
+    val showAddCard = remember { mutableStateOf(false) }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFECECEC))
     ) {
-        // Header with logo
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(0xFF001E2F),
-                    RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp)
-                )
-                .padding(16.dp)
-        ) {
-            // Logo
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Logo",
+        Column {
+            Header()
+
+            Column(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(40.dp)
-            )
-        }
-        
-        // Main content
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Dashboard title
-            Text(
-                text = "Teacher's Dashboard",
-                style = Typography.titleLarge.copy(
-                    color = Color(0xFF001E2F),
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            
-            Text(
-                text = "Track student attendance, manage your sections, and stay organized.",
-                style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            // Sections grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(16.dp)
+                    .fillMaxSize()
             ) {
-                SectionCard(
-                    sectionName = "Section 1",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSectionClick("Section 1") }
-                )
-                
-                SectionCard(
-                    sectionName = "Section 2",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSectionClick("Section 2") }
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                SectionCard(
-                    sectionName = "Section 3",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSectionClick("Section 3") }
-                )
-                
-                SectionCard(
-                    sectionName = "Section 4",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSectionClick("Section 4") }
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                SectionCard(
-                    sectionName = "Section 5",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSectionClick("Section 5") }
-                )
-                
-                // Add New Class card
-                Card(
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(120.dp)
-                        .clickable { onAddNewClassClick() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    border = BorderStroke(1.dp, Color(0xFF001E2F).copy(alpha = 0.2f))
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = "Add New Class",
-                            tint = Color(0xFF001E2F),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Add New Class",
-                            style = Typography.bodyMedium.copy(
+                            text = "Teacher’s Dashboard",
+                            style = Typography.titleLarge.copy(
                                 color = Color(0xFF001E2F),
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Bold
                             )
                         )
+                        Text(
+                            text = "Track student participation, generate reports, and stay organized",
+                            style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(id = R.drawable.gg_qr),
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(classSections) { section ->
+                        SectionCard(
+                            section = section,
+                            onClick = { onSectionClick(section.name) },
+                            onDashboardClick = { onSectionClick(section.name) }
+                        )
+                    }
+
+                    if (showAddCard.value) {
+                        item {
+                            AddClassCard(
+                                onAddClick = { className ->
+                                    showAddCard.value = false
+                                    onAddNewClassClick(className)
+                                },
+                                onDashboardClick = {
+                                    // Handle dashboard action if needed
+                                }
+                            )
+                        }
                     }
                 }
             }
+        }
+
+        // Button matching the first image
+        Button(
+            onClick = { showAddCard.value = true },
+            shape = RoundedCornerShape(50),
+            border = BorderStroke(1.dp, Color(0xFF001E2F)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = Color(0xFF001E2F)
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+                .height(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add New Class",
+                tint = Color(0xFF001E2F)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Add New Class",
+                style = Typography.labelLarge.copy(fontWeight = FontWeight.Medium)
+            )
         }
     }
 }
 
 @Composable
+fun Header() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF001E2F))
+            .padding(16.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .size(40.dp)
+        )
+    }
+}
+
+@Composable
 fun SectionCard(
-    sectionName: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    section: ClassSection,
+    onClick: () -> Unit,
+    onDashboardClick: () -> Unit
 ) {
     Card(
-        modifier = modifier
-            .height(120.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F))
@@ -184,30 +179,146 @@ fun SectionCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = sectionName,
-                style = Typography.titleMedium.copy(
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
+            Column {
+                Text(
+                    text = section.name,
+                    style = Typography.titleMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
-            
+                Text(
+                    text = "${section.studentCount} students",
+                    style = Typography.bodySmall.copy(color = Color.Gray)
+                )
+            }
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                OutlinedButton(
+                    onClick = onDashboardClick,
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(1.dp, Color.White),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color.White,
+                        containerColor = Color.Transparent
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.dash),
+                        contentDescription = "Dashboard",
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Dashboard",
+                        style = Typography.labelSmall
+                    )
+                }
+
                 IconButton(
-                    onClick = { onClick() },
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                    onClick = { /* TODO: Handle options click */ },
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = "View Section",
+                        painter = painterResource(id = R.drawable.vector),
+                        contentDescription = "Options",
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(20.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AddClassCard(
+    onAddClick: (String) -> Unit,
+    onDashboardClick: () -> Unit
+) {
+    var className by remember { mutableStateOf("") }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            OutlinedTextField(
+                value = className,
+                onValueChange = { className = it },
+                placeholder = { Text("Name of the class", color = Color.Gray) },
+                textStyle = TextStyle(color = Color.White),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.Transparent,
+                    cursorColor = Color.White
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
+
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedButton(
+                    onClick = onDashboardClick,
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(1.dp, Color.White),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.dash),
+                        contentDescription = "Dashboard",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Dashboard", style = Typography.labelSmall)
+                }
+
+                OutlinedButton(
+                    onClick = { onAddClick(className) },
+                    shape = RoundedCornerShape(50),
+                    border = BorderStroke(1.dp, Color.White),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("+ Add", style = Typography.labelSmall)
                 }
             }
         }
