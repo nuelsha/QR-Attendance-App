@@ -18,11 +18,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.attendance.attendancetracker.R
+import com.attendance.attendancetracker.presentation.viewmodels.AuthViewModel
 import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable
 fun SignUpScreen(
+    viewModel: AuthViewModel = hiltViewModel(),
     onLoginClick: () -> Unit = {},
     onSignUpSuccess: (Boolean) -> Unit = {}
 ) {
@@ -31,6 +36,23 @@ fun SignUpScreen(
     var id by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel.authState) {
+        viewModel.authState?.let {
+            if (it.isSuccess) {
+                val response = it.getOrNull()
+                val userName = response?.name ?: "User"
+                val isTeacher = response?.role == "teacher"
+                Toast.makeText(context, "Sign Up Successful for $userName", Toast.LENGTH_SHORT).show()
+                onSignUpSuccess(isTeacher)
+            } else {
+                val errorMessage = it.exceptionOrNull()?.message ?: "An unknown error occurred"
+                Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_LONG).show()
+                viewModel.clearAuthState() 
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -233,8 +255,12 @@ fun SignUpScreen(
                 // Sign Up button
                 Button(
                     onClick = {
-                        val isTeacher = selectedRole == "Teacher"
-                        onSignUpSuccess(isTeacher)
+                        if (name.isNotBlank() && id.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
+                            val roleToRegister = if (selectedRole == "Teacher") "teacher" else "student"
+                            viewModel.signup(name, id, email, password, roleToRegister)
+                        } else {
+                            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F)),
                     shape = RoundedCornerShape(50),
