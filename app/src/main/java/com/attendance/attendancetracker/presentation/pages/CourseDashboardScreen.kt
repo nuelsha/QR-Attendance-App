@@ -8,13 +8,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.ArrowBack
+//import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.DateRange
+//import androidx.compose.material.icons.filled.People
+//import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +47,7 @@ fun CourseDashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF5F5F5))
             .verticalScroll(rememberScrollState())
     ) {
         // Header with logo
@@ -85,7 +96,7 @@ private fun AppHeader() {
         Image(
             painter = painterResource(id = R.drawable.scanin_logo_removebg_preview__1__2_layerstyle__1_),
             contentDescription = "App Logo",
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(40.dp)
         )
     }
 }
@@ -101,10 +112,10 @@ private fun CourseHeader(
         modifier = Modifier.padding(vertical = 16.dp)
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.arrow_ios_back_svgrepo_com),
+            imageVector = Icons.Filled.ArrowBack,
             contentDescription = "Back",
             tint = Color(0xFF001E2F),
-            modifier = Modifier.clickable { onBackClick() }
+            modifier = Modifier.size(28.dp).clickable { onBackClick() }
         )
         
         Spacer(modifier = Modifier.width(16.dp))
@@ -131,107 +142,114 @@ private fun TrackingSummarySection(
     presentPercentage: Int,
     absentPercentage: Int
 ) {
-    Column {
-        // Section title
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        // Section title with icon
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 12.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.calendar),
-                contentDescription = "Calendar",
+                imageVector = Icons.Filled.DateRange,
+                contentDescription = "Tracking Summary Icon",
                 tint = Color(0xFF001E2F),
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(24.dp)
             )
-
             Spacer(modifier = Modifier.width(8.dp))
-
             Text(
                 text = "Tracking Summary",
-                style = Typography.bodyMedium.copy(
+                style = Typography.titleSmall.copy(
                     color = Color(0xFF001E2F),
                     fontWeight = FontWeight.Bold
                 )
             )
         }
 
-        // Present card
+        // Stat Cards
         AttendanceStatCard(
-            iconRes = R.drawable.logo,
+            iconRes = -1,
+            iconVector = ImageVector.vectorResource(id = R.drawable.p),
             title = "Present",
             description = "The number of days that the student was available",
             percentage = presentPercentage
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Absent card
         AttendanceStatCard(
-            iconRes = R.drawable.logo,
+            iconRes = -1,
+            iconVector = ImageVector.vectorResource(id = R.drawable.group),
             title = "Absent",
             description = "The number of days that the student was NOT available",
             percentage = absentPercentage
         )
+
     }
 }
 
 @Composable
-private fun AttendanceStatCard(
+fun AttendanceStatCard(
     iconRes: Int,
+    iconVector: androidx.compose.ui.graphics.vector.ImageVector? = null,
     title: String,
     description: String,
     percentage: Int
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEEEEEE))
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0)),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(Color(0xFF001E2F)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = title,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
+                if (iconVector != null) {
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = title,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                } else if (iconRes != -1) {
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = title,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Text content
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = Typography.bodyMedium.copy(
-                        color = Color(0xFF001E2F),
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = Typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = Color(0xFF001E2F))
                 )
-
                 Text(
                     text = description,
                     style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
                 )
             }
 
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Percentage
             Text(
                 text = "$percentage%",
-                style = Typography.titleMedium.copy(
-                    color = Color(0xFF001E2F),
-                    fontWeight = FontWeight.Bold
+                style = Typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF001E2F)
                 )
             )
         }
@@ -244,11 +262,11 @@ private fun AttendanceReportSection(
     onExcuseClick: () -> Unit,
     onAbsentClick: () -> Unit
 ) {
-    Column {
+    Column(modifier = Modifier.padding(top = 16.dp)) {
         // Section title
         Text(
             text = "Attendance Report",
-            style = Typography.bodyMedium.copy(
+            style = Typography.titleSmall.copy(
                 color = Color(0xFF001E2F),
                 fontWeight = FontWeight.Bold
             ),
@@ -277,35 +295,13 @@ private fun AttendanceReportSection(
 }
 
 @Composable
-private fun CompactAttendanceButton(
-    text: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    TextButton(
-        onClick = onClick,
-        colors = ButtonDefaults.textButtonColors(
-            containerColor = color,
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(4.dp),
-        modifier = Modifier.height(28.dp)
-    ) {
-        Text(
-            text = text,
-            style = Typography.labelSmall.copy(fontWeight = FontWeight.Bold)
-        )
-    }
-}
-
-@Composable
 fun AttendanceCalendarGrid(modifier: Modifier) {
     // Based on the image, create a 4x5 grid of attendance data
     val attendanceData = listOf(
-        listOf(1, 1, 1, 1, 1), // 1 = Present
-        listOf(1, 1, 3, 1, 1), // 3 = Absent
-        listOf(1, 1, 2, 1, 1), // 2 = Excuse
-        listOf(1, 1, 1, 3, 1)
+        listOf(1, 1, 1, 1, 1, 1, 1, 1),
+        listOf(1, 1, 1, 1, 3, 1, 1, 1),
+        listOf(1, 1, 1, 1, 1, 1, 1, 3),
+        listOf(1, 1, 1, 1)
     )
 
     Column(
@@ -319,18 +315,28 @@ fun AttendanceCalendarGrid(modifier: Modifier) {
             ) {
                 row.forEach { status ->
                     val color = when (status) {
-                        1 -> Color(0xFF001E2F) // Present
-                        2 -> Color(0xFFFFB74D) // Excuse
-                        3 -> Color(0xFFE53935) // Absent
-                        else -> Color.Transparent // Empty
+                        1 -> Color(0xFF001E2F)
+                        2 -> Color(0xFFFFB74D)
+                        3 -> Color(0xFFE53935)
+                        else -> Color.Transparent
                     }
 
                     Box(
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(if (row.size < 8 && row.indexOf(status) == row.lastIndex && row.size % 2 != 0) (8-row.size+1).toFloat() else 1f)
                             .aspectRatio(1f)
                             .background(color, RoundedCornerShape(4.dp))
                     )
+                }
+                if (row.size < 8) {
+                    for (i in 0 until (8 - row.size)) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .background(Color.Transparent)
+                        )
+                    }
                 }
             }
         }
@@ -362,23 +368,29 @@ private fun ScanButton(onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F)),
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(28.dp),
         modifier = Modifier
-            .width(100.dp)
-            .height(40.dp)
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = 64.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.qr),
+            imageVector = ImageVector.vectorResource(id = R.drawable.qr), // your custom vector resource
             contentDescription = "Scan",
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(24.dp),
+            tint = Color.White
         )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text("Scan", style = Typography.bodySmall)
+
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Scan", style = Typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold))
     }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CourseDashboardScreenPreview() {
-    CourseDashboardScreen()
+    MaterialTheme {
+        CourseDashboardScreen()
+    }
 }
