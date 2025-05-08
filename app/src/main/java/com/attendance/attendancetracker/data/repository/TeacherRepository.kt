@@ -7,13 +7,12 @@ import javax.inject.Inject
 
 class TeacherRepository @Inject constructor(private val api: AuthApi) {
 
-    suspend fun createClass(token: String): Result<CreateClassResponse> {
+    suspend fun createClass(token: String, className: String, section: String, schedule: String): Result<CreateClassResponse> {
         return try {
-            // Hardcoded ClassRequest as per the prompt
             val classRequest = ClassRequest(
-                className = "os",
-                section = "4",
-                schedule = "something" // Or className, if that's still the preference
+                className = className,
+                section = section,
+                schedule = schedule
             )
             val response = api.createClass(
                 classRequest = classRequest,

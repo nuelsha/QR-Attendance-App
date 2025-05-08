@@ -23,6 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
 import com.attendance.attendancetracker.data.models.ClassItem
@@ -47,6 +48,7 @@ fun TeacherHomeScreen(
     val error by dashboardViewModel.error.observeAsState(initial = null)
 
     val context = LocalContext.current
+    var showDialog by remember { mutableStateOf(false) }
 
     Log.d("TeacherHomeScreen", "Composition: authToken='${authToken}'")
 
@@ -66,6 +68,7 @@ fun TeacherHomeScreen(
             if (authToken.isNotBlank()) {
                 dashboardViewModel.loadDashboard(authToken) // Refresh dashboard
             }
+            showDialog = false // Close dialog on success
             teacherViewModel.onStateHandled() // Reset state
         }
     }
@@ -156,11 +159,7 @@ fun TeacherHomeScreen(
 
                 FloatingActionButton(
                     onClick = {
-                        if (authToken.isNotBlank()) {
-                            teacherViewModel.createClass(authToken)
-                        } else {
-                            Toast.makeText(context, "Auth token not available for creating class", Toast.LENGTH_SHORT).show()
-                        }
+                        showDialog = true
                     },
                     modifier = Modifier
                         .align(Alignment.End)
@@ -171,6 +170,20 @@ fun TeacherHomeScreen(
                 }
             }
         }
+    }
+
+    if (showDialog) {
+        AddClassDialog(
+            onDismissRequest = { showDialog = false },
+            onAddClick = { className ->
+                if (authToken.isNotBlank()) {
+                    // For now, section is hardcoded as "S1" and schedule as className
+                    teacherViewModel.createClass(authToken, className, "S1", className)
+                } else {
+                    Toast.makeText(context, "Auth token not available", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 }
 
@@ -256,6 +269,107 @@ fun SectionCard(
             }
         }
     }
+}
+
+@Composable
+fun AddClassDialog(
+    onDismissRequest: () -> Unit,
+    onAddClick: (className: String) -> Unit
+) {
+    var className by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    Dialog(onDismissRequest = onDismissRequest) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F)) // Dark background for card
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = className,
+                    onValueChange = { className = it },
+                    placeholder = { Text("Name of the class", color = Color.Gray) },
+                    label = { Text("Name of the class", color = Color.White) },
+                    textStyle = TextStyle(color = Color.White),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.LightGray,
+                        cursorColor = Color.White,
+                        focusedLabelColor = Color.White,
+                        unfocusedLabelColor = Color.LightGray,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    OutlinedButton(
+                        onClick = onDismissRequest, // "Dashboard" button acts as cancel
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, Color.White),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.dash), // Assuming R.drawable.dash exists
+                            contentDescription = "Dashboard/Cancel",
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Dashboard", style = Typography.labelSmall)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (className.isNotBlank()) {
+                                onAddClick(className)
+                            } else {
+                                Toast.makeText(context, "Class name cannot be empty", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, Color.White),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add",
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("+ Add", style = Typography.labelSmall)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AddClassDialogPreview() {
+//    AttendanceTrackerTheme {
+        AddClassDialog(onDismissRequest = {}, onAddClick = {})
+//    }
 }
 
 @Preview(showBackground = true)

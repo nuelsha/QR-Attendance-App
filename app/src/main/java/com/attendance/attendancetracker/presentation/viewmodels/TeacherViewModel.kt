@@ -21,13 +21,13 @@ class TeacherViewModel @Inject constructor(
     var errorMessage by mutableStateOf("")
         private set // Only ViewModel can set this
 
-    fun createClass(token: String) {
+    fun createClass(token: String, className: String, section: String, schedule: String) {
         viewModelScope.launch {
             // Reset states before a new operation
             isClassCreated = false
             errorMessage = ""
 
-            val result = repository.createClass(token)
+            val result = repository.createClass(token, className, section, schedule)
             if (result.isSuccess) {
                 val responseData = result.getOrNull()
                 if (responseData?.success == true) { // Check the 'success' field from CreateClassResponse
