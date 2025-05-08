@@ -126,9 +126,6 @@ fun AppNavigation(
                 authToken = token, // Pass the auth token explicitly
                 onSectionClick = { courseName ->
                     navController.navigate(Routes.sectionDetail(courseName))
-                },
-                onAddNewClassClick = {
-                    // In a real app, you would navigate to a form to add a new class
                 }
             )
         }
@@ -195,8 +192,8 @@ fun AppNavigation(
         ) { backStackEntry ->
             // Using the shared AuthViewModel from NavHost level
             val courseName = backStackEntry.arguments?.getString("courseName") ?: "DefaultCourse"
-            val authResult = authViewModel.authState?.getOrNull()
-            val token = authResult?.token ?: ""
+            val authResult = authViewModel.authState
+            val token = authResult?.getOrNull()?.token ?: ""
 
             SectionDetailScreen(
                 courseName = courseName,

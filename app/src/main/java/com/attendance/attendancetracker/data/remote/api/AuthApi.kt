@@ -1,6 +1,8 @@
 package com.attendance.attendancetracker.data.remote.api
 
 import com.attendance.attendancetracker.data.models.ClassItem
+import com.attendance.attendancetracker.data.models.ClassRequest
+import com.attendance.attendancetracker.data.models.CreateClassResponse
 import com.attendance.attendancetracker.data.remote.dto.AuthResponseDto
 import com.attendance.attendancetracker.data.remote.dto.DashboardResponse
 import com.attendance.attendancetracker.data.remote.dto.LoginRequestDto
@@ -27,4 +29,10 @@ interface AuthApi {
     suspend fun getDashboardClasses(
         @Header("Authorization") token: String
     ): Response<DashboardResponse>
+
+    @POST("http://10.0.2.2:1000/teacher/create-class")
+    suspend fun createClass(
+        @Body classRequest: ClassRequest,
+        @Header("Authorization") token: String
+    ): Response<CreateClassResponse>
 }
