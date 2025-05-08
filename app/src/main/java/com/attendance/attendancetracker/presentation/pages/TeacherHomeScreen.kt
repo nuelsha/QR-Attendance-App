@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,24 +22,50 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
+import com.attendance.attendancetracker.data.models.ClassItem
+import com.attendance.attendancetracker.presentation.viewmodels.AuthViewModel
+import com.attendance.attendancetracker.presentation.viewmodels.DashboardViewModel
 import com.attendance.attendancetracker.ui.theme.Typography
+import android.util.Log
 
-data class ClassSection(val name: String, val studentCount: Int)
+data class ClassSection(val name: String, val studentCount: Int, val originalId: String)
 
 @Composable
 fun TeacherHomeScreen(
-    classSections: List<ClassSection> = listOf(
-        ClassSection("Section 1", 51),
-        ClassSection("Section 2", 49),
-        ClassSection("Section 3", 50),
-        ClassSection("Section 4", 50),
-        ClassSection("Section 5", 50),
-    ),
+    authToken: String = "", // Receive auth token directly as parameter
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     onSectionClick: (String) -> Unit = {},
     onAddNewClassClick: (String) -> Unit = {}
 ) {
+    val classes by dashboardViewModel.classes.observeAsState(initial = emptyList())
+    val isLoading by dashboardViewModel.isLoading.observeAsState(initial = false)
+    val error by dashboardViewModel.error.observeAsState(initial = null)
+
     val showAddCard = remember { mutableStateOf(false) }
+
+    Log.d("TeacherHomeScreen", "Composition: authToken='${authToken}'")
+
+    LaunchedEffect(authToken) {
+        Log.d("TeacherHomeScreen", "LaunchedEffect triggered. Current token: '$authToken'")
+        if (authToken.isNotBlank()) {
+            Log.d("TeacherHomeScreen", "Token is valid. Loading dashboard with token: $authToken")
+            dashboardViewModel.loadDashboard(authToken)
+        } else {
+            Log.d("TeacherHomeScreen", "Token is blank inside LaunchedEffect. Dashboard not loaded.")
+        }
+    }
+
+    val classSections = remember(classes) {
+        classes.map {
+            ClassSection(
+                name = it.className,
+                studentCount = it.students?.size ?: 0,
+                originalId = it.id
+            )
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -82,61 +109,53 @@ fun TeacherHomeScreen(
                     )
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(classSections) { section ->
-                        SectionCard(
-                            section = section,
-                            onClick = { onSectionClick(section.name) },
-                            onDashboardClick = { onSectionClick(section.name) }
-                        )
-                    }
-
-                    if (showAddCard.value) {
-                        item {
-                            AddClassCard(
-                                onAddClick = { className ->
-                                    showAddCard.value = false
-                                    onAddNewClassClick(className)
-                                },
-                                onDashboardClick = {
-                                    // Handle dashboard action if needed
-                                }
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else if (error != null) {
+                    Text(
+                        text = "Error: $error",
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(classSections) { section ->
+                            SectionCard(
+                                section = section,
+                                onClick = { onSectionClick(section.originalId) },
+                                onDashboardClick = { onSectionClick(section.originalId) }
                             )
+                        }
+
+                        if (showAddCard.value) {
+                            item {
+                                AddClassCard(
+                                    onAddClick = { className ->
+                                        onAddNewClassClick(className)
+                                        showAddCard.value = false
+                                    },
+                                    onDashboardClick = { /* Decide what this should do */ }
+                                )
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        // Button matching the first image
-        Button(
-            onClick = { showAddCard.value = true },
-            shape = RoundedCornerShape(50),
-            border = BorderStroke(1.dp, Color(0xFF001E2F)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color(0xFF001E2F)
-            ),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp)
-                .height(48.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add New Class",
-                tint = Color(0xFF001E2F)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Add New Class",
-                style = Typography.labelLarge.copy(fontWeight = FontWeight.Medium)
-            )
+                FloatingActionButton(
+                    onClick = { showAddCard.value = !showAddCard.value },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Filled.Add, "Add new class", tint = Color.White)
+                }
+            }
         }
     }
 }
@@ -169,68 +188,55 @@ fun SectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(130.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF001E2F))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
                 Text(
                     text = section.name,
-                    style = Typography.titleMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${section.studentCount} students",
-                    style = Typography.bodySmall.copy(color = Color.Gray)
+                    text = "${section.studentCount} Students",
+                    style = Typography.bodySmall,
+                    color = Color.Gray
                 )
             }
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedButton(
                     onClick = onDashboardClick,
                     shape = RoundedCornerShape(50),
                     border = BorderStroke(1.dp, Color.White),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.White,
-                        containerColor = Color.Transparent
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White
                     ),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(36.dp)
                 ) {
-                    Image(
+                    Icon(
                         painter = painterResource(id = R.drawable.dash),
                         contentDescription = "Dashboard",
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Dashboard",
                         style = Typography.labelSmall
-                    )
-                }
-
-                IconButton(
-                    onClick = { /* TODO: Handle options click */ },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.vector),
-                        contentDescription = "Options",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -328,5 +334,5 @@ fun AddClassCard(
 @Preview(showBackground = true)
 @Composable
 fun TeacherHomeScreenPreview() {
-    TeacherHomeScreen()
+    TeacherHomeScreen(authToken = "sample-preview-token")
 }

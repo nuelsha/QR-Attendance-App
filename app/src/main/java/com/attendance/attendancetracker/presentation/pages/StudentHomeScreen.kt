@@ -30,7 +30,7 @@ import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable
 fun StudentHomeScreen(
-    studentName: String = "Anat",
+    studentName: String = "",
     authToken: String,
     dashboardViewModel: DashboardViewModel = hiltViewModel(),
     onCourseClick: (String) -> Unit = {},

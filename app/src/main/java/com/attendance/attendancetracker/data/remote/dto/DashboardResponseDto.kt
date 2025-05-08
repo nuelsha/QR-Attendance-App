@@ -2,6 +2,9 @@ package com.attendance.attendancetracker.data.remote.dto
 
 import com.attendance.attendancetracker.data.models.ClassItem
 import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonElement
+import com.google.gson.Gson
+import com.attendance.attendancetracker.data.remote.dto.StudentLiteDto
 
 // Main response wrapper
 data class DashboardResponse(
@@ -16,8 +19,8 @@ data class ClassItemDto(
     @SerializedName("className") val className: String?,
     @SerializedName("section") val section: String?,
     @SerializedName("schedule") val schedule: ScheduleDto?,
-    @SerializedName("students") val students: List<String>?,
-    @SerializedName("teacher") val teacher: String?,
+    @SerializedName("students") val students: List<StudentLiteDto>?,
+    @SerializedName("teacher") val teacher: JsonElement?,
     @SerializedName("createdAt") val createdAt: String? // Consider converting to Date/LocalDateTime in mapper
 )
 
@@ -29,12 +32,38 @@ data class ScheduleDto(
 
 // Mapper function for ClassItemDto to ClassItem domain model
 fun ClassItemDto.toDomain(): ClassItem {
+    val finalTeacherId: String
+    val finalTeacherName: String
+
+    if (this.teacher != null && !this.teacher.isJsonNull) {
+        if (this.teacher.isJsonObject) {
+            // Case: Teacher is an object (Student's view)
+            val teacherDto = Gson().fromJson(this.teacher, TeacherDto::class.java)
+            finalTeacherId = teacherDto.id ?: "N/A"
+            finalTeacherName = teacherDto.name ?: "N/A"
+        } else if (this.teacher.isJsonPrimitive && this.teacher.asJsonPrimitive.isString) {
+            // Case: Teacher is a String ID (Teacher's view)
+            finalTeacherId = this.teacher.asString
+            finalTeacherName = "N/A" 
+        } else {
+            finalTeacherId = "N/A"
+            finalTeacherName = "N/A"
+        }
+    } else {
+        finalTeacherId = "N/A"
+        finalTeacherName = "N/A"
+    }
+
+    val studentIds = this.students?.mapNotNull { it.id } 
+
     return ClassItem(
         id = this.id,
-        className = this.className ?: "N/A", // Provide default for nullable fields
+        className = this.className ?: "N/A",
         section = this.section ?: "N/A",
         scheduleDays = this.schedule?.toDomain() ?: emptyList(),
-        teacherId = this.teacher ?: "N/A",
+        teacherId = finalTeacherId,
+        teacherName = finalTeacherName,
+        students = studentIds, 
         createdAt = this.createdAt ?: "N/A"
     )
 }

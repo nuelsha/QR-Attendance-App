@@ -117,7 +117,13 @@ fun AppNavigation(
         }
 
         composable(Routes.TEACHER_HOME) {
+            // Get auth token from the shared AuthViewModel
+            val currentAuthState = authViewModel.authState
+            val token = currentAuthState?.getOrNull()?.token ?: ""
+            Log.d("AppNavigation", "TEACHER_HOME - Using shared AuthViewModel, currentAuthState: ${currentAuthState?.isSuccess}, token: '$token'")
+            
             TeacherHomeScreen(
+                authToken = token, // Pass the auth token explicitly
                 onSectionClick = { courseName ->
                     navController.navigate(Routes.sectionDetail(courseName))
                 },
