@@ -25,6 +25,7 @@ import com.attendance.attendancetracker.ui.theme.Typography
 @Composable
 fun AttendanceSummaryScreen(
     sectionName: String = "Section 1",
+    authToken: String,
     totalStudents: Int = 50,
     studentList: List<Student> = listOf(
         Student("Tsedeke Techane", "UGR/1234/15", 40),
@@ -170,7 +171,5 @@ fun AttendanceSummaryScreen(
 @Preview(showBackground = true)
 @Composable
 fun PreviewAttendanceSummaryScreen() {
-
-        AttendanceSummaryScreen()
-
+    AttendanceSummaryScreen(authToken = "dummy_token_for_preview")
 }

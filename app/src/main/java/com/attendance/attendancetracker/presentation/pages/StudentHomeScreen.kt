@@ -1,5 +1,6 @@
 package com.attendance.attendancetracker.presentation.pages
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -9,7 +10,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,28 +23,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
+import com.attendance.attendancetracker.presentation.viewmodels.DashboardViewModel
 import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable
 fun StudentHomeScreen(
     studentName: String = "Anat",
+    authToken: String,
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     onCourseClick: (String) -> Unit = {},
     onScanClick: (String) -> Unit = {}
 ) {
+    LaunchedEffect(key1 = authToken) {
+        if (authToken.isNotBlank()) {
+            Log.d("StudentHomeScreen", "AuthToken received, loading dashboard.")
+            dashboardViewModel.loadDashboard(authToken)
+        } else {
+            Log.w("StudentHomeScreen", "AuthToken is blank. Cannot load dashboard.")
+        }
+    }
+
+    // Observe LiveData states
+    val classes by dashboardViewModel.classes.observeAsState(initial = emptyList())
+    val isLoading by dashboardViewModel.isLoading.observeAsState(initial = false)
+    val error by dashboardViewModel.error.observeAsState(initial = null)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5)) // Lighter background to match image
+            .background(Color(0xFFF5F5F5))
     ) {
-        // Header with logo and menu button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF001E2F))
                 .padding(16.dp)
         ) {
-            // Logo
             Row(
                 modifier = Modifier.align(Alignment.CenterStart),
                 verticalAlignment = Alignment.CenterVertically
@@ -51,7 +72,6 @@ fun StudentHomeScreen(
                 )
             }
 
-            // Menu button
             IconButton(
                 onClick = { /* Open menu */ },
                 modifier = Modifier.align(Alignment.CenterEnd)
@@ -64,14 +84,12 @@ fun StudentHomeScreen(
             }
         }
 
-        // Main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Greeting
             Text(
                 text = "Hi $studentName,",
                 style = Typography.titleLarge.copy(
@@ -97,77 +115,44 @@ fun StudentHomeScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Course grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CourseCard(
-                    title = "Cyber Security",
-                    teacher = "Senayit Demisse",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Cyber Security") },
-                    onScanClick = { onScanClick("Cyber Security") }
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (error != null) {
+                Text(
+                    text = "Error loading dashboard: $error",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
                 )
-
-                CourseCard(
-                    title = "Operating System",
-                    teacher = "Eshetu Demisse",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Operating System") },
-                    onScanClick = { onScanClick("Operating System") }
+            } else if (classes.isEmpty() && !isLoading) {
+                Text(
+                    text = "No courses available for you today.",
+                    modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CourseCard(
-                    title = "Mobile",
-                    teacher = "Sara Mohammed",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Mobile") },
-                    onScanClick = { onScanClick("Mobile") }
-                )
-
-                CourseCard(
-                    title = "Artificial Intelligence",
-                    teacher = "Manyazewal Eshetu",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Artificial Intelligence") },
-                    onScanClick = { onScanClick("Artificial Intelligence") }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CourseCard(
-                    title = "Graphics",
-                    teacher = "Abebe Tessema",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Graphics") },
-                    onScanClick = { onScanClick("Graphics") }
-                )
-
-                CourseCard(
-                    title = "Operating System",
-                    teacher = "Teshome Chane",
-                    modifier = Modifier.weight(1f),
-                    onCardClick = { onCourseClick("Operating System 2") },
-                    onScanClick = { onScanClick("Operating System 2") }
-                )
+            } else {
+                classes.chunked(2).forEach { rowItems ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        rowItems.forEach { classItem ->
+                            CourseCard(
+                                title = classItem.className,
+                                teacher = classItem.teacherId,
+                                modifier = Modifier.weight(1f),
+                                onCardClick = { onCourseClick(classItem.id) },
+                                onScanClick = { onScanClick(classItem.id) }
+                            )
+                        }
+                        if (rowItems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f).padding(8.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Main scan button
             Button(
                 onClick = { /* Global scan */ },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F)),
@@ -188,6 +173,7 @@ fun StudentHomeScreen(
         }
     }
 }
+
 @Composable
 fun CourseCard(
     title: String,
@@ -236,7 +222,7 @@ fun CourseCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.dash), // Use proper dashboard icon
+                        painter = painterResource(id = R.drawable.dash),
                         contentDescription = "Dashboard",
                         modifier = Modifier.size(10.dp)
                     )
@@ -256,7 +242,7 @@ fun CourseCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.qr), // Use proper scan icon (or custom if needed)
+                        painter = painterResource(id = R.drawable.qr),
                         contentDescription = "Scan",
                         modifier = Modifier.size(12.dp)
                     )
@@ -267,8 +253,6 @@ fun CourseCard(
                     )
                 }
             }
-
-
         }
     }
 }
@@ -276,5 +260,5 @@ fun CourseCard(
 @Preview(showBackground = true)
 @Composable
 fun StudentHomeScreenPreview() {
-    StudentHomeScreen()
+    StudentHomeScreen(authToken = "dummy_token_for_preview")
 }

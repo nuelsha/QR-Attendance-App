@@ -45,11 +45,11 @@ fun LoginScreen(
                 val isTeacher = authResponse?.role == "teacher" // Or whatever string represents a teacher
                 Toast.makeText(context, "Login successful for $userName", Toast.LENGTH_SHORT).show()
                 onLoginSuccess(isTeacher)
-                viewModel.clearAuthState() // Clear state after handling
+                // viewModel.clearAuthState() // Removed: Clear state after handling
             } else {
                 val errorMessage = it.exceptionOrNull()?.message ?: "Login failed"
                 Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_LONG).show()
-                viewModel.clearAuthState() // Clear state after handling
+                viewModel.clearAuthState() // Clear state after handling error
             }
         }
     }

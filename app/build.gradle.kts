@@ -68,6 +68,7 @@ dependencies {
 
     // Hilt for Dependency Injection
     implementation(libs.hilt.android)
+    implementation(libs.androidx.runtime.livedata)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 

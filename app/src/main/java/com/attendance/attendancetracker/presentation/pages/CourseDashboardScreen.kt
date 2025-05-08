@@ -36,6 +36,7 @@ import com.attendance.attendancetracker.ui.theme.Typography
 fun CourseDashboardScreen(
     courseName: String = "Cyber Security",
     teacherName: String = "Senayit Demisse",
+    authToken: String,
     presentPercentage: Int = 80,
     absentPercentage: Int = 20,
     onBackClick: () -> Unit = {},
@@ -391,6 +392,6 @@ private fun ScanButton(onClick: () -> Unit) {
 @Composable
 fun CourseDashboardScreenPreview() {
     MaterialTheme {
-        CourseDashboardScreen()
+        CourseDashboardScreen(authToken = "dummy_auth_token")
     }
 }

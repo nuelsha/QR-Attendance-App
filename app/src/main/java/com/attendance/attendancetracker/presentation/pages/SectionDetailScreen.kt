@@ -30,7 +30,8 @@ import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable
 fun SectionDetailScreen(
-    sectionName: String,
+    courseName: String,
+    authToken: String,
     onBackClick: () -> Unit = {},
     onGenerateQRClick: (String) -> Unit = {}
 ) {
@@ -110,7 +111,7 @@ fun SectionDetailScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = sectionName,
+                            text = courseName,
                             style = Typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF001E2F)
@@ -121,7 +122,7 @@ fun SectionDetailScreen(
                             style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
                         )
                     }
-                    IconButton(onClick = { onGenerateQRClick(sectionName) }) {
+                    IconButton(onClick = { onGenerateQRClick(courseName) }) {
                         Image(
                             painter = painterResource(id = R.drawable.gg_qr),
                             contentDescription = "Generate QR",
@@ -537,5 +538,5 @@ data class Student(
 @Preview(showBackground = true)
 @Composable
 fun SectionDetailScreenPreview() {
-    SectionDetailScreen(sectionName = "Section 1")
+    SectionDetailScreen(courseName = "Sample Course", authToken = "sample_token")
 }
