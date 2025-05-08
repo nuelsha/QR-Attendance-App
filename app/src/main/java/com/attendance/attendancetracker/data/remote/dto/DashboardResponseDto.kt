@@ -19,7 +19,7 @@ data class ClassItemDto(
     @SerializedName("className") val className: String?,
     @SerializedName("section") val section: String?,
     @SerializedName("schedule") val schedule: ScheduleDto?,
-    @SerializedName("students") val students: List<StudentLiteDto>?,
+    @SerializedName("students") val students: JsonElement?, // Using JsonElement to handle both arrays of strings and objects
     @SerializedName("teacher") val teacher: JsonElement?,
     @SerializedName("createdAt") val createdAt: String? // Consider converting to Date/LocalDateTime in mapper
 )
@@ -54,7 +54,26 @@ fun ClassItemDto.toDomain(): ClassItem {
         finalTeacherName = "N/A"
     }
 
-    val studentIds = this.students?.mapNotNull { it.id } 
+    // Extract student IDs based on the type of students field
+    val studentIds = when {
+        this.students == null || this.students.isJsonNull -> emptyList()
+        this.students.isJsonArray -> {
+            val jsonArray = this.students.asJsonArray
+            // Handle both cases: array of strings or array of objects
+            jsonArray.map { element ->
+                when {
+                    element.isJsonPrimitive -> element.asString // Direct string ID
+                    element.isJsonObject -> {
+                        // Object with ID field
+                        val studentObj = element.asJsonObject
+                        if (studentObj.has("_id")) studentObj.get("_id").asString else ""
+                    }
+                    else -> "" // Handle other cases
+                }
+            }.filter { it.isNotEmpty() }
+        }
+        else -> emptyList() // Fallback for unexpected formats
+    }
 
     return ClassItem(
         id = this.id,
