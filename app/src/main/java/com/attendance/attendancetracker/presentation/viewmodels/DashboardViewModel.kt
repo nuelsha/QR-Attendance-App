@@ -52,4 +52,10 @@ class DashboardViewModel @Inject constructor(
             )
         }
     }
+
+    fun deleteClassLocally(classId: String) {
+        val currentClasses = _classes.value?.toMutableList() ?: mutableListOf()
+        currentClasses.removeAll { it.id == classId }
+        _classes.postValue(currentClasses)
+    }
 }

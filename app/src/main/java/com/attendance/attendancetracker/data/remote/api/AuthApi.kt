@@ -3,6 +3,7 @@ package com.attendance.attendancetracker.data.remote.api
 import com.attendance.attendancetracker.data.models.ClassItem
 import com.attendance.attendancetracker.data.models.ClassRequest
 import com.attendance.attendancetracker.data.models.CreateClassResponse
+import com.attendance.attendancetracker.data.models.DeleteClassResponse
 import com.attendance.attendancetracker.data.remote.dto.AuthResponseDto
 import com.attendance.attendancetracker.data.remote.dto.DashboardResponse
 import com.attendance.attendancetracker.data.remote.dto.LoginRequestDto
@@ -11,9 +12,11 @@ import com.attendance.attendancetracker.data.remote.dto.LogoutResponseDto
 import com.attendance.attendancetracker.data.remote.dto.SignupRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface AuthApi {
     @POST("auth/register")
@@ -35,4 +38,10 @@ interface AuthApi {
         @Body classRequest: ClassRequest,
         @Header("Authorization") token: String
     ): Response<CreateClassResponse>
+
+    @DELETE("http://10.0.2.2:1000/teacher/delete-class/{classId}")
+    suspend fun deleteClass(
+        @Path("classId") classId: String,
+        @Header("Authorization") token: String
+    ): Response<DeleteClassResponse>
 }

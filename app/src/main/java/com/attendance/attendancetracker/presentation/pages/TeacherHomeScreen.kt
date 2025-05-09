@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -151,7 +152,11 @@ fun TeacherHomeScreen(
                             SectionCard(
                                 section = section,
                                 onClick = { onSectionClick(section.originalId) },
-                                onDashboardClick = { onSectionClick(section.originalId) }
+                                onDashboardClick = { onSectionClick(section.originalId) },
+                                onDeleteClick = {
+                                    dashboardViewModel.deleteClassLocally(section.originalId)
+                                    Toast.makeText(context, "Class removed locally", Toast.LENGTH_SHORT).show()
+                                }
                             )
                         }
                     }
@@ -209,7 +214,8 @@ fun Header() {
 fun SectionCard(
     section: ClassSection,
     onClick: () -> Unit,
-    onDashboardClick: () -> Unit
+    onDashboardClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -264,6 +270,17 @@ fun SectionCard(
                     Text(
                         text = "Dashboard",
                         style = Typography.labelSmall
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Delete Class",
+                        tint = Color.White
                     )
                 }
             }
