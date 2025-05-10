@@ -166,7 +166,11 @@ fun AppNavigation(
             arguments = listOf(navArgument("courseName") { type = NavType.StringType })
         ) { backStackEntry ->
             val courseName = backStackEntry.arguments?.getString("courseName") ?: "Cyber Security"
-
+            
+            // Get auth token from AuthViewModel
+            val authResult = authViewModel.authState
+            val token = authResult?.getOrNull()?.token ?: ""
+            
             // Map course names to teacher names
             val teacherMap = remember {
                 mapOf(
@@ -182,7 +186,9 @@ fun AppNavigation(
             QRScannerScreen(
                 courseName = courseName,
                 teacherName = teacherMap[courseName] ?: "",
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                authToken = token,
+                classId = courseName
             )
         }
 

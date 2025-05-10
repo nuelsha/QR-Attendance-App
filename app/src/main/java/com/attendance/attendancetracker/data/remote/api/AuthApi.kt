@@ -1,6 +1,8 @@
 package com.attendance.attendancetracker.data.remote.api
 
 import com.attendance.attendancetracker.data.remote.dto.AttendanceHistoryResponse
+import com.attendance.attendancetracker.data.models.AttendanceScanRequest
+import com.attendance.attendancetracker.data.models.AttendanceScanResponse
 import com.attendance.attendancetracker.data.models.ClassItem
 import com.attendance.attendancetracker.data.models.ClassRequest
 import com.attendance.attendancetracker.data.models.CreateClassResponse
@@ -58,4 +60,10 @@ interface AuthApi {
         @Path("classId") classId: String,
         @Header("Authorization") token: String
     ): Response<StudentAttendanceHistoryResponse>
+    
+    @POST("attendance/scan")
+    suspend fun scanAttendance(
+        @Body request: AttendanceScanRequest,
+        @Header("Authorization") token: String
+    ): Response<AttendanceScanResponse>
 }
