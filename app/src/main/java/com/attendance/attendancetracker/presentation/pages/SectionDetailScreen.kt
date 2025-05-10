@@ -1,6 +1,7 @@
 package com.attendance.attendancetracker.presentation.pages
 
 import android.util.Log
+import android.widget.Toast
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,21 +22,29 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
 // Removed BackButton import as it's not available
 import com.attendance.attendancetracker.presentation.viewmodels.AuthViewModel
 import com.attendance.attendancetracker.presentation.viewmodels.AttendanceViewModel
+import com.attendance.attendancetracker.presentation.viewmodels.TeacherViewModel
 import com.attendance.attendancetracker.ui.theme.Typography
+import kotlinx.coroutines.launch
 
 @Composable
 fun SectionDetailScreen(
@@ -43,7 +52,8 @@ fun SectionDetailScreen(
     authToken: String,
     onBackClick: () -> Unit = {},
     onGenerateQRClick: (String) -> Unit = {},
-    attendanceViewModel: AttendanceViewModel = hiltViewModel()
+    attendanceViewModel: AttendanceViewModel = hiltViewModel(),
+    teacherViewModel: TeacherViewModel = hiltViewModel()
 ) {
     var students by remember {
         mutableStateOf(
@@ -62,16 +72,25 @@ fun SectionDetailScreen(
         )
     }
 
-    var showAddForm by remember { mutableStateOf(false) }
+    // Controls visibility of the add student dialog
+    var showAddDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var newId by remember { mutableStateOf("") }
     var showAll by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope() // Add coroutine scope for suspend functions
     val visibleCount = 8
-
+    
+    // States from ViewModels
     val attendanceHistory by attendanceViewModel.attendanceHistory.observeAsState(null)
     val isLoading by attendanceViewModel.isLoading.observeAsState(initial = false)
     val error by attendanceViewModel.error.observeAsState()
+    
+    // Add student states
+    val isStudentAdded by teacherViewModel.isStudentAdded.observeAsState(false)
+    val addStudentError by teacherViewModel.addStudentError.observeAsState()
+    val isAddingStudent by teacherViewModel.isLoading.observeAsState(false)
+    val context = LocalContext.current
 
     LaunchedEffect(key1 = courseName, key2 = authToken) {
         Log.d("SectionDetailScreen", "LaunchedEffect triggered. courseName: '" + courseName + "', authToken present: " + authToken.isNotBlank().toString())
@@ -82,11 +101,133 @@ fun SectionDetailScreen(
             Log.w("SectionDetailScreen", "Skipping loadAttendanceHistory: courseName ('" + courseName + "') or authToken (present: " + authToken.isNotBlank().toString() + ") is blank.")
         }
     }
+    
+    // Handle student addition results
+    LaunchedEffect(isStudentAdded, addStudentError) {
+        if (isStudentAdded) {
+            // Student was successfully added
+            Toast.makeText(context, "Student added successfully!", Toast.LENGTH_SHORT).show()
+            showAddDialog = false
+            newName = ""
+            newId = ""
+            
+            // Refresh attendance data to show the newly added student
+            if (courseName.isNotBlank() && authToken.isNotBlank()) {
+                attendanceViewModel.loadAttendanceHistory(classId = courseName, token = authToken)
+            }
+            
+            // Reset the state in viewModel
+            teacherViewModel.resetAddStudentState()
+        }
+        
+        addStudentError?.let { error ->
+            if (error.isNotEmpty()) {
+                Toast.makeText(context, "Error: $error", Toast.LENGTH_LONG).show()
+                teacherViewModel.resetAddStudentState()
+            }
+        }
+    }
+    
+    // Add Student Dialog
+    if (showAddDialog) {
+        Dialog(onDismissRequest = { showAddDialog = false }) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    // Dialog Title
+                    Text(
+                        text = "Add New Student",
+                        style = Typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFF001E2F),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    // Student Name Field
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        label = { Text("Student Name") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        singleLine = true
+                    )
+                    
+                    // Student ID Field
+                    OutlinedTextField(
+                        value = newId,
+                        onValueChange = { newId = it },
+                        label = { Text("Student ID") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                    )
+                    
+                    // Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        // Cancel Button
+                        TextButton(
+                            onClick = { 
+                                showAddDialog = false
+                                newName = ""
+                                newId = ""
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Add Button with loading indicator
+                        Button(
+                            onClick = {
+                                if (newName.isBlank() || newId.isBlank()) {
+                                    Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    // Call API to add student
+                                    teacherViewModel.addStudentToClass(
+                                        classId = courseName,
+                                        studentName = newName,
+                                        studentId = newId,
+                                        token = authToken
+                                    )
+                                }
+                            },
+                            enabled = !isAddingStudent,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F))
+                        ) {
+                            if (isAddingStudent) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Add Student")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
+            // Floating action button to show the add student dialog
             FloatingActionButton(
-                onClick = { showAddForm = !showAddForm },
+                onClick = { showAddDialog = true },
                 containerColor = Color(0xFF001E2F)
             ) {
                 Text("+", color = Color.White, fontWeight = FontWeight.Bold)
@@ -244,66 +385,7 @@ fun SectionDetailScreen(
                                 }
                             }
 
-                            if (showAddForm) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Card(
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F9FA)),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(modifier = Modifier.padding(20.dp)) {
-                                        Text(
-                                            "Add New Student",
-                                            style = Typography.titleMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF001E2F)
-                                            )
-                                        )
-                                        Spacer(modifier = Modifier.height(12.dp))
 
-                                        OutlinedTextField(
-                                            value = newName,
-                                            onValueChange = { newName = it },
-                                            label = { Text("Student Name") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(12.dp),
-                                            singleLine = true
-                                        )
-
-                                        Spacer(modifier = Modifier.height(10.dp))
-
-                                        OutlinedTextField(
-                                            value = newId,
-                                            onValueChange = { newId = it },
-                                            label = { Text("Student ID") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(12.dp),
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                            singleLine = true
-                                        )
-
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        Button(
-                                            onClick = {
-                                                if (newName.isNotBlank() && newId.isNotBlank()) {
-                                                    students.add(Student(newName, newId, 0))
-                                                    newName = ""
-                                                    newId = ""
-                                                    showAddForm = false
-                                                }
-                                            },
-                                            shape = RoundedCornerShape(12.dp),
-                                            modifier = Modifier
-                                                .align(Alignment.End)
-                                                .height(48.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F))
-                                        ) {
-                                            Text(text = "+ Add", color = Color.White, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
 
