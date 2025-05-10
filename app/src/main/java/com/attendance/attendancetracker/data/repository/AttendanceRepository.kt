@@ -2,6 +2,7 @@ package com.attendance.attendancetracker.data.repository
 
 import android.util.Log
 import com.attendance.attendancetracker.data.remote.dto.AttendanceHistoryResponse
+import com.attendance.attendancetracker.data.remote.dto.StudentAttendanceHistoryResponse
 import com.attendance.attendancetracker.data.remote.api.AuthApi
 import javax.inject.Inject
 
@@ -29,6 +30,28 @@ class AttendanceRepository @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e("AttendanceRepository", "Exception in getClassAttendanceHistory for classId $classId: " + e.message, e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getStudentClassAttendanceHistory(classId: String, token: String): Result<StudentAttendanceHistoryResponse> {
+        Log.d("AttendanceRepository", "getStudentClassAttendanceHistory called. classId: '$classId', token present: ${token.isNotBlank()}")
+        return try {
+            val formattedToken = if (token.startsWith("Bearer ")) token else "Bearer $token"
+            Log.d("AttendanceRepository", "Attempting API call: api.getStudentAttendanceHistory for classId=$classId with token: ${formattedToken.take(10)}...")
+            val response = api.getStudentAttendanceHistory(classId = classId, token = formattedToken)
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Log.d("AttendanceRepository", "API call successful for getStudentClassAttendanceHistory, classId $classId")
+                    Result.success(it)
+                } ?: Result.failure(Exception("Response body is null for getStudentClassAttendanceHistory, classId $classId"))
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "No error body"
+                Log.e("AttendanceRepository", "API Error for getStudentClassAttendanceHistory, classId $classId: ${response.code()} ${response.message()}. Error body: $errorBody")
+                Result.failure(Exception("API Error: ${response.code()} ${response.message()} - $errorBody"))
+            }
+        } catch (e: Exception) {
+            Log.e("AttendanceRepository", "Exception in getStudentClassAttendanceHistory for classId $classId: ${e.message}", e)
             Result.failure(e)
         }
     }

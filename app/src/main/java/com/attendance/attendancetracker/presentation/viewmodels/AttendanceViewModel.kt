@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.attendance.attendancetracker.data.remote.dto.AttendanceHistoryResponse
+import com.attendance.attendancetracker.data.remote.dto.StudentAttendanceHistoryResponse
 import com.attendance.attendancetracker.data.repository.AttendanceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -18,6 +19,9 @@ class AttendanceViewModel @Inject constructor(
 
     private val _attendanceHistory = MutableLiveData<AttendanceHistoryResponse?>()
     val attendanceHistory: LiveData<AttendanceHistoryResponse?> = _attendanceHistory
+
+    private val _studentAttendanceCalendarData = MutableLiveData<StudentAttendanceHistoryResponse?>()
+    val studentAttendanceCalendarData: LiveData<StudentAttendanceHistoryResponse?> = _studentAttendanceCalendarData
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -41,6 +45,29 @@ class AttendanceViewModel @Inject constructor(
                     Log.e("AttendanceViewModel", "Error fetching attendance history for $classId: " + exception.message, exception)
                     _attendanceHistory.postValue(null) // Clear data on error
                     _error.postValue(exception.message ?: "Unknown error")
+                    _isLoading.postValue(false)
+                }
+            )
+        }
+    }
+
+    fun loadStudentAttendanceCalendar(classId: String, token: String) {
+        Log.d("AttendanceViewModel", "loadStudentAttendanceCalendar called with classId: $classId, token present: ${token.isNotBlank()}")
+        viewModelScope.launch {
+            _isLoading.postValue(true)
+            _error.postValue(null)
+            _studentAttendanceCalendarData.postValue(null) // Clear previous data
+            val result = repository.getStudentClassAttendanceHistory(classId, token)
+            result.fold(
+                onSuccess = { data ->
+                    Log.d("AttendanceViewModel", "Successfully fetched student attendance calendar for $classId")
+                    _studentAttendanceCalendarData.postValue(data)
+                    _isLoading.postValue(false)
+                },
+                onFailure = { exception ->
+                    Log.e("AttendanceViewModel", "Error fetching student attendance calendar for $classId: ${exception.message}", exception)
+                    _studentAttendanceCalendarData.postValue(null) // Clear data on error
+                    _error.postValue(exception.message ?: "Unknown error fetching student calendar")
                     _isLoading.postValue(false)
                 }
             )

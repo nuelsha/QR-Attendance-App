@@ -11,6 +11,7 @@ import com.attendance.attendancetracker.data.remote.dto.LoginRequestDto
 import com.attendance.attendancetracker.data.remote.dto.LogoutRequestDto
 import com.attendance.attendancetracker.data.remote.dto.LogoutResponseDto
 import com.attendance.attendancetracker.data.remote.dto.SignupRequestDto
+import com.attendance.attendancetracker.data.remote.dto.StudentAttendanceHistoryResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -51,4 +52,10 @@ interface AuthApi {
         @Path("classId") classId: String,
         @Header("Authorization") token: String
     ): Response<AttendanceHistoryResponse>
+
+    @GET("/attendance/history/class/{classId}")
+    suspend fun getStudentAttendanceHistory(
+        @Path("classId") classId: String,
+        @Header("Authorization") token: String
+    ): Response<StudentAttendanceHistoryResponse>
 }

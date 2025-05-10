@@ -38,3 +38,30 @@ data class HistoryItem(
     val date: String,
     val presentStudents: List<String>
 )
+
+// --- New Data Classes for Student-Specific Attendance History ---
+
+data class StudentAttendanceHistoryResponse(
+    val success: Boolean,
+    @SerializedName("class")
+    val classDetail: StudentClassDetail,
+    val statistics: StudentAttendanceStatistics,
+    val history: List<DailyAttendanceRecord>
+)
+
+data class StudentClassDetail(
+    val name: String,
+    val section: String
+)
+
+data class StudentAttendanceStatistics(
+    val totalClasses: Int,
+    val presentCount: Int,
+    val absentCount: Int,
+    val attendancePercentage: Int
+)
+
+data class DailyAttendanceRecord(
+    val date: String, // Format: "YYYY-MM-DD"
+    val status: String // e.g., "present", "absent"
+)
