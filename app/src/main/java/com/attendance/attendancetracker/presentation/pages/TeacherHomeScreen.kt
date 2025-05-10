@@ -182,8 +182,8 @@ fun TeacherHomeScreen(
             onDismissRequest = { showDialog = false },
             onAddClick = { className ->
                 if (authToken.isNotBlank()) {
-                    // For now, section is hardcoded as "S1" and schedule as className
-                    teacherViewModel.createClass(authToken, className, "S1", className)
+                    // For now, section is hardcoded as "S1"
+                    teacherViewModel.createClass(className = className, section = "S1", token = authToken)
                 } else {
                     Toast.makeText(context, "Auth token not available", Toast.LENGTH_SHORT).show()
                 }

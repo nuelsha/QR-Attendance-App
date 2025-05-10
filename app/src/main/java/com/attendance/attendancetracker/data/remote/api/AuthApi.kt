@@ -9,6 +9,8 @@ import com.attendance.attendancetracker.data.models.ClassItem
 import com.attendance.attendancetracker.data.models.ClassRequest
 import com.attendance.attendancetracker.data.models.CreateClassResponse
 import com.attendance.attendancetracker.data.models.DeleteClassResponse
+import com.attendance.attendancetracker.data.models.GenerateQrRequest
+import com.attendance.attendancetracker.data.models.GenerateQrResponse
 import com.attendance.attendancetracker.data.remote.dto.AuthResponseDto
 import com.attendance.attendancetracker.data.remote.dto.DashboardResponse
 import com.attendance.attendancetracker.data.remote.dto.LoginRequestDto
@@ -75,4 +77,10 @@ interface AuthApi {
         @Body request: AddStudentRequest,
         @Header("Authorization") token: String
     ): Response<AddStudentResponse>
+
+    @POST("/attendance/generate")
+    suspend fun generateQrCode(
+        @Body request: GenerateQrRequest,
+        @Header("Authorization") token: String
+    ): Response<GenerateQrResponse>
 }

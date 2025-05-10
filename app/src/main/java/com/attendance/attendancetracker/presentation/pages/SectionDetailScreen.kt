@@ -26,9 +26,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +43,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
 // Removed BackButton import as it's not available
+import com.attendance.attendancetracker.data.models.GenerateQrResponse
 import com.attendance.attendancetracker.presentation.viewmodels.AuthViewModel
 import com.attendance.attendancetracker.presentation.viewmodels.AttendanceViewModel
 import com.attendance.attendancetracker.presentation.viewmodels.TeacherViewModel
@@ -92,6 +96,12 @@ fun SectionDetailScreen(
     val isAddingStudent by teacherViewModel.isLoading.observeAsState(false)
     val context = LocalContext.current
 
+    // QR Code Generation States
+    var showQrDialog by remember { mutableStateOf(false) }
+    val qrCodeResponse by teacherViewModel.qrCodeResponse.observeAsState()
+    val qrCodeError by teacherViewModel.qrCodeError.observeAsState()
+    val isGeneratingQr by teacherViewModel.isGeneratingQr.observeAsState(false)
+
     LaunchedEffect(key1 = courseName, key2 = authToken) {
         Log.d("SectionDetailScreen", "LaunchedEffect triggered. courseName: '" + courseName + "', authToken present: " + authToken.isNotBlank().toString())
         if (courseName.isNotBlank() && authToken.isNotBlank()) {
@@ -124,6 +134,21 @@ fun SectionDetailScreen(
             if (error.isNotEmpty()) {
                 Toast.makeText(context, "Error: $error", Toast.LENGTH_LONG).show()
                 teacherViewModel.resetAddStudentState()
+            }
+        }
+    }
+    
+    // Handle QR Code generation results
+    LaunchedEffect(qrCodeResponse, qrCodeError) {
+        qrCodeResponse?.let {
+            showQrDialog = true
+            // Potentially reset LiveData in ViewModel if it shouldn't persist post-dialog
+        }
+        qrCodeError?.let {
+            if (it.isNotEmpty()) {
+                Toast.makeText(context, "QR Error: $it", Toast.LENGTH_LONG).show()
+                // Reset error in ViewModel
+                // teacherViewModel.resetQrErrorState() // You'll need to implement this
             }
         }
     }
@@ -223,6 +248,17 @@ fun SectionDetailScreen(
         }
     }
 
+    // QR Code Dialog
+    if (showQrDialog && qrCodeResponse != null) {
+        QrCodeDialog(
+            qrResponse = qrCodeResponse!!,
+            onDismiss = { 
+                showQrDialog = false 
+                // teacherViewModel.resetQrResponseState() // You'll need to implement this
+            }
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
             // Floating action button to show the add student dialog
@@ -287,7 +323,12 @@ fun SectionDetailScreen(
                             style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
                         )
                     }
-                    IconButton(onClick = { onGenerateQRClick(courseName) }) {
+                    IconButton(onClick = { 
+                        teacherViewModel.generateQrCode(
+                            classId = courseName,
+                            token = authToken
+                        )
+                    }) {
                         Image(
                             painter = painterResource(id = R.drawable.gg_qr),
                             contentDescription = "Generate QR",
@@ -768,6 +809,77 @@ data class Student(
     val id: String,
     val attendancePercentage: Int
 )
+
+@Composable
+fun QrCodeDialog(qrResponse: GenerateQrResponse, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Scan for Attendance", 
+                    style = Typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Decode and display QR Code Image
+                val imageBitmap = remember(qrResponse.qrCodeImage) {
+                    try {
+                        val pureBase64Encoded = qrResponse.qrCodeImage.substringAfter("base64,")
+                        val imageBytes = android.util.Base64.decode(pureBase64Encoded, android.util.Base64.DEFAULT)
+                        android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)?.asImageBitmap()
+                    } catch (e: Exception) {
+                        Log.e("QrCodeDialog", "Error decoding Base64 image", e)
+                        null
+                    }
+                }
+
+                if (imageBitmap != null) {
+                    Image(
+                        bitmap = imageBitmap,
+                        contentDescription = "QR Code",
+                        modifier = Modifier
+                            .size(250.dp)
+                            .padding(bottom = 16.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text(
+                        "Error displaying QR code.", 
+                        color = Color.Red, 
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+
+                Text(
+                    "Attendance ID: ${qrResponse.attendanceId}", 
+                    style = Typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    "Expires At: ${qrResponse.expiresAt}", // Consider formatting this date/time
+                    style = Typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F))
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

@@ -7,7 +7,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.attendance.attendancetracker.data.models.AddStudentResponse
+import com.attendance.attendancetracker.data.models.ClassRequest
+import com.attendance.attendancetracker.data.models.CreateClassResponse
+import com.attendance.attendancetracker.data.models.GenerateQrResponse
 import com.attendance.attendancetracker.data.repository.TeacherRepository
+import com.attendance.attendancetracker.common.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,25 +38,41 @@ class TeacherViewModel @Inject constructor(
     private val _addStudentError = MutableLiveData<String?>(null)
     val addStudentError: LiveData<String?> = _addStudentError
 
-    fun createClass(token: String, className: String, section: String, schedule: String) {
-        viewModelScope.launch {
-            // Reset states before a new operation
-            isClassCreated = false
-            errorMessage = ""
+    private val _qrCodeResponse = MutableLiveData<GenerateQrResponse?>()
+    val qrCodeResponse: LiveData<GenerateQrResponse?> = _qrCodeResponse
 
-            val result = repository.createClass(token, className, section, schedule)
-            if (result.isSuccess) {
-                val responseData = result.getOrNull()
-                if (responseData?.success == true) { // Check the 'success' field from CreateClassResponse
-                    isClassCreated = true
-                } else {
-                    // API call itself was successful (e.g., 2xx HTTP status),
-                    // but the operation indicated failure (e.g., createClassResponse.success = false)
-                    errorMessage = responseData?.message ?: "Failed to create class (API reported failure)"
+    private val _qrCodeError = MutableLiveData<String?>()
+    val qrCodeError: LiveData<String?> = _qrCodeError
+
+    private val _isGeneratingQr = MutableLiveData<Boolean>()
+    val isGeneratingQr: LiveData<Boolean> = _isGeneratingQr
+
+    private val _createClassError = MutableLiveData<String?>()
+    val createClassError: LiveData<String?> = _createClassError
+
+    private val _isClassCreated = MutableLiveData<Boolean>()
+    val isClassCreatedLiveData: LiveData<Boolean> = _isClassCreated
+
+    fun createClass(className: String, section: String, token: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _createClassError.value = null // Reset error before new operation
+            _isClassCreated.value = false // Reset success state
+
+            when (val result = repository.createClass(className, section, token)) {
+                is Result.Success -> {
+                    if (result.data?.success == true) {
+                        _isClassCreated.value = true
+                    } else {
+                        _createClassError.value = result.data?.message ?: "Failed to create class (unknown reason)"
+                    }
                 }
-            } else { // result.isFailure (e.g., network error, non-2xx HTTP status from Retrofit)
-                errorMessage = result.exceptionOrNull()?.message ?: "Unknown error occurred during class creation"
+                is Result.Error -> {
+                    _createClassError.value = result.message
+                }
+                else -> {}
             }
+            _isLoading.value = false
         }
     }
 
@@ -70,27 +91,23 @@ class TeacherViewModel @Inject constructor(
     fun addStudentToClass(classId: String, studentName: String, studentId: String, token: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _isStudentAdded.value = false
-            _addStudentError.value = null
-            
-            try {
-                val result = repository.addStudentToClass(classId, studentName, studentId, token)
-                
-                if (result.isSuccess) {
-                    val response = result.getOrNull()
-                    if (response?.success == true) {
+            _addStudentError.value = null // Reset error
+            _isStudentAdded.value = false // Reset success state
+
+            when (val result = repository.addStudentToClass(classId, studentName, studentId, token)) {
+                is Result.Success -> {
+                    if (result.data?.success == true) {
                         _isStudentAdded.value = true
                     } else {
-                        _addStudentError.value = response?.message ?: "Failed to add student"
+                        _addStudentError.value = result.data?.message ?: "Failed to add student (unknown reason)"
                     }
-                } else {
-                    _addStudentError.value = result.exceptionOrNull()?.message ?: "Unknown error occurred"
                 }
-            } catch (e: Exception) {
-                _addStudentError.value = e.message ?: "Unknown error occurred"
-            } finally {
-                _isLoading.value = false
+                is Result.Error -> {
+                    _addStudentError.value = result.message
+                }
+                else -> {}
             }
+            _isLoading.value = false
         }
     }
     
@@ -100,5 +117,24 @@ class TeacherViewModel @Inject constructor(
     fun resetAddStudentState() {
         _isStudentAdded.value = false
         _addStudentError.value = null
+    }
+
+    fun generateQrCode(classId: String, token: String) {
+        viewModelScope.launch {
+            _isGeneratingQr.value = true
+            _qrCodeError.value = null
+            _qrCodeResponse.value = null
+
+            when (val result = repository.generateQrCode(classId, token)) {
+                is Result.Success -> {
+                    _qrCodeResponse.value = result.data
+                }
+                is Result.Error -> {
+                    _qrCodeError.value = result.message
+                }
+                else -> {}
+            }
+            _isGeneratingQr.value = false
+        }
     }
 }
