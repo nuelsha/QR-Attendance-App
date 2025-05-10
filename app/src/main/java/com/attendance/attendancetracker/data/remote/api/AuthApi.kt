@@ -1,5 +1,6 @@
 package com.attendance.attendancetracker.data.remote.api
 
+import com.attendance.attendancetracker.data.remote.dto.AttendanceHistoryResponse
 import com.attendance.attendancetracker.data.models.ClassItem
 import com.attendance.attendancetracker.data.models.ClassRequest
 import com.attendance.attendancetracker.data.models.CreateClassResponse
@@ -44,4 +45,10 @@ interface AuthApi {
         @Path("classId") classId: String,
         @Header("Authorization") token: String
     ): Response<DeleteClassResponse>
+
+    @GET("/attendance/class/{classId}/history")
+    suspend fun getAttendanceHistory(
+        @Path("classId") classId: String,
+        @Header("Authorization") token: String
+    ): Response<AttendanceHistoryResponse>
 }

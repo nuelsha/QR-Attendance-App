@@ -1,0 +1,49 @@
+package com.attendance.attendancetracker.presentation.viewmodels
+
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.attendance.attendancetracker.data.remote.dto.AttendanceHistoryResponse
+import com.attendance.attendancetracker.data.repository.AttendanceRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class AttendanceViewModel @Inject constructor(
+    private val repository: AttendanceRepository
+) : ViewModel() {
+
+    private val _attendanceHistory = MutableLiveData<AttendanceHistoryResponse?>()
+    val attendanceHistory: LiveData<AttendanceHistoryResponse?> = _attendanceHistory
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
+
+    fun loadAttendanceHistory(classId: String, token: String) {
+        Log.d("AttendanceViewModel", "loadAttendanceHistory called with classId: " + classId + ", token present: " + token.isNotBlank().toString())
+        viewModelScope.launch {
+            _isLoading.postValue(true)
+            _error.postValue(null)
+            val result = repository.getClassAttendanceHistory(classId, token)
+            result.fold(
+                onSuccess = { data ->
+                    Log.d("AttendanceViewModel", "Successfully fetched attendance history for $classId")
+                    _attendanceHistory.postValue(data)
+                    _isLoading.postValue(false)
+                },
+                onFailure = { exception ->
+                    Log.e("AttendanceViewModel", "Error fetching attendance history for $classId: " + exception.message, exception)
+                    _attendanceHistory.postValue(null) // Clear data on error
+                    _error.postValue(exception.message ?: "Unknown error")
+                    _isLoading.postValue(false)
+                }
+            )
+        }
+    }
+}

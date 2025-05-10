@@ -1,12 +1,15 @@
 package com.attendance.attendancetracker.presentation.pages
 
+import android.util.Log
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,7 +29,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.attendancetracker.R
+// Removed BackButton import as it's not available
+import com.attendance.attendancetracker.presentation.viewmodels.AuthViewModel
+import com.attendance.attendancetracker.presentation.viewmodels.AttendanceViewModel
 import com.attendance.attendancetracker.ui.theme.Typography
 
 @Composable
@@ -33,7 +42,8 @@ fun SectionDetailScreen(
     courseName: String,
     authToken: String,
     onBackClick: () -> Unit = {},
-    onGenerateQRClick: (String) -> Unit = {}
+    onGenerateQRClick: (String) -> Unit = {},
+    attendanceViewModel: AttendanceViewModel = hiltViewModel()
 ) {
     var students by remember {
         mutableStateOf(
@@ -58,6 +68,20 @@ fun SectionDetailScreen(
     var showAll by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val visibleCount = 8
+
+    val attendanceHistory by attendanceViewModel.attendanceHistory.observeAsState(null)
+    val isLoading by attendanceViewModel.isLoading.observeAsState(initial = false)
+    val error by attendanceViewModel.error.observeAsState()
+
+    LaunchedEffect(key1 = courseName, key2 = authToken) {
+        Log.d("SectionDetailScreen", "LaunchedEffect triggered. courseName: '" + courseName + "', authToken present: " + authToken.isNotBlank().toString())
+        if (courseName.isNotBlank() && authToken.isNotBlank()) {
+            Log.d("SectionDetailScreen", "Calling loadAttendanceHistory for classId: " + courseName)
+            attendanceViewModel.loadAttendanceHistory(classId = courseName, token = authToken)
+        } else {
+            Log.w("SectionDetailScreen", "Skipping loadAttendanceHistory: courseName ('" + courseName + "') or authToken (present: " + authToken.isNotBlank().toString() + ") is blank.")
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -131,95 +155,223 @@ fun SectionDetailScreen(
                     }
                 }
 
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        val displayedStudents = if (showAll) students else students.take(visibleCount)
-
-                        displayedStudents.forEachIndexed { index, student ->
-                            StudentAttendanceItem(index + 1, student)
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-
-                        if (!showAll && students.size > visibleCount) {
-                            IconButton(
-                                onClick = { showAll = true },
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (error != null) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Error: $error", style = Typography.bodySmall, color = Color(0xFF4A6572))
+                    }
+                } else if (attendanceHistory != null) {
+                    val history = attendanceHistory!!
+                    Column(horizontalAlignment = Alignment.Start) {
+                        // Display basic class info from response
+                        Text("Class: ${history.classInfo?.name ?: "Unknown"}", style = Typography.titleMedium)
+                        Text("Section: ${history.classInfo?.section ?: "Unknown"}", style = Typography.bodySmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Overall Attendance: ${history.overallStats?.averageAttendance ?: 0}%", style = Typography.bodySmall)
+                        Text("Total Classes Conducted: ${history.overallStats?.totalClasses ?: 0}", style = Typography.bodySmall)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Student Attendance:", style = Typography.titleMedium)
+                        val studentList = history.overallStats?.students ?: emptyList()
+                        if (studentList.isEmpty()) {
+                            Text("No student data available.", style = Typography.bodySmall)
+                        } else {
+                            LazyColumn(
                                 modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(top = 8.dp)
+                                    .fillMaxWidth()
+                                    .heightIn(max = 300.dp) // Add a max height constraint
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = "Show More",
-                                    tint = Color(0xFF001E2F)
-                                )
-                            }
-                        }
-
-                        if (showAddForm) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Card(
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F9FA)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(20.dp)) {
-                                    Text(
-                                        "Add New Student",
-                                        style = Typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF001E2F)
-                                        )
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    OutlinedTextField(
-                                        value = newName,
-                                        onValueChange = { newName = it },
-                                        label = { Text("Student Name") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        singleLine = true
-                                    )
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    OutlinedTextField(
-                                        value = newId,
-                                        onValueChange = { newId = it },
-                                        label = { Text("Student ID") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                        singleLine = true
-                                    )
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    Button(
-                                        onClick = {
-                                            if (newName.isNotBlank() && newId.isNotBlank()) {
-                                                students.add(Student(newName, newId, 0))
-                                                newName = ""
-                                                newId = ""
-                                                showAddForm = false
-                                            }
-                                        },
-                                        shape = RoundedCornerShape(12.dp),
+                                items(studentList) { student ->
+                                    Card(
                                         modifier = Modifier
-                                            .align(Alignment.End)
-                                            .height(48.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F))
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                     ) {
-                                        Text(text = "+ Add", color = Color.White, fontWeight = FontWeight.Bold)
+                                        Column(modifier = Modifier.padding(12.dp)) {
+                                            Text(
+                                                text = student.name ?: "Unknown",
+                                                style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                            Text(
+                                                text = "ID: ${student.studentOrStaffId ?: "Unknown"}",
+                                                style = Typography.bodySmall
+                                            )
+                                            Text(
+                                                text = "Email: ${student.email ?: "Unknown"}",
+                                                style = Typography.bodySmall
+                                            )
+                                            Text(
+                                                text = "Attendance: ${student.attendancePercentage}%",
+                                                style = Typography.bodySmall.copy(
+                                                    color = if (student.attendancePercentage >= 75) Color(0xFF001E2F) else Color(0xFF4A6572)
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                } else {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            val displayedStudents = if (showAll) students else students.take(visibleCount)
+
+                            displayedStudents.forEachIndexed { index, student ->
+                                StudentAttendanceItem(index + 1, student)
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
+
+                            if (!showAll && students.size > visibleCount) {
+                                IconButton(
+                                    onClick = { showAll = true },
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .padding(top = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Show More",
+                                        tint = Color(0xFF001E2F)
+                                    )
+                                }
+                            }
+
+                            if (showAddForm) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F9FA)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(20.dp)) {
+                                        Text(
+                                            "Add New Student",
+                                            style = Typography.titleMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF001E2F)
+                                            )
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        OutlinedTextField(
+                                            value = newName,
+                                            onValueChange = { newName = it },
+                                            label = { Text("Student Name") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            singleLine = true
+                                        )
+
+                                        Spacer(modifier = Modifier.height(10.dp))
+
+                                        OutlinedTextField(
+                                            value = newId,
+                                            onValueChange = { newId = it },
+                                            label = { Text("Student ID") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp),
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                                            singleLine = true
+                                        )
+
+                                        Spacer(modifier = Modifier.height(16.dp))
+
+                                        Button(
+                                            onClick = {
+                                                if (newName.isNotBlank() && newId.isNotBlank()) {
+                                                    students.add(Student(newName, newId, 0))
+                                                    newName = ""
+                                                    newId = ""
+                                                    showAddForm = false
+                                                }
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier
+                                                .align(Alignment.End)
+                                                .height(48.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF001E2F))
+                                        ) {
+                                            Text(text = "+ Add", color = Color.White, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Text(
+                        "Fetched Attendance History",
+                        style = Typography.titleLarge.copy(color = Color(0xFF001E2F)),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    if (isLoading) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (error != null) {
+                        Card(modifier = Modifier.fillMaxWidth(),  colors = CardDefaults.cardColors(containerColor = Color(0xFFE57373))) {
+                            Text(
+                                text = "Error: $error",
+                                style = Typography.bodySmall.copy(color = Color(0xFF4A6572)),
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    } else if (attendanceHistory != null) {
+                        val history = attendanceHistory!!
+                        Card(modifier = Modifier.fillMaxWidth(),  colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Class: ${history.classInfo.name}", style = Typography.titleMedium)
+                                Text("Section: ${history.classInfo.section}", style = Typography.bodySmall)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Overall Attendance: ${history.overallStats.averageAttendance}%", style = Typography.bodySmall)
+                                Text("Total Classes Conducted: ${history.overallStats.totalClasses}", style = Typography.bodySmall)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Student Breakdown:", style = Typography.titleMedium)
+                                if (history.overallStats.students.isEmpty()) {
+                                    Text("No student attendance data available from server.", style = Typography.bodySmall)
+                                } else {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
+                                    ) {
+                                        items(history.overallStats.students) { student ->
+                                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                                Text(
+                                                    text = student.name,
+                                                    style = Typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                                                )
+                                                Text(
+                                                    text = "ID: ${student.studentOrStaffId} - Email: ${student.email}",
+                                                    style = Typography.bodySmall
+                                                )
+                                                Text(
+                                                    text = "Attendance: ${student.attendancePercentage ?: 0}%",
+                                                    style = Typography.bodySmall.copy(
+                                                        color = if ((student.attendancePercentage ?: 0) >= 75) Color(0xFF00695C) else Color(0xFFD32F2F)
+                                                    )
+                                                )
+                                                Divider(modifier = Modifier.padding(top = 4.dp))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text("No attendance history loaded yet or data is unavailable.", style = Typography.bodySmall, modifier = Modifier.padding(16.dp))
+                    }
+
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }
