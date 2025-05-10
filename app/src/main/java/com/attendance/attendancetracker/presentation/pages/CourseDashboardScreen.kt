@@ -53,6 +53,7 @@ fun CourseDashboardScreen(
     teacherName: String = "Senayit Demisse",
     authToken: String,
     onBackClick: () -> Unit = {},
+    onScanClick: () -> Unit = {}, // Added for QR scanning
     attendanceViewModel: AttendanceViewModel = hiltViewModel()
 ) {
     val studentAttendanceData by attendanceViewModel.studentAttendanceCalendarData.observeAsState()
@@ -69,6 +70,21 @@ fun CourseDashboardScreen(
         topBar = {
             AppHeader(courseName, teacherName, onBackClick)
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onScanClick,
+                containerColor = Color(0xFF001E2F),
+                contentColor = Color.White,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.qr),
+                    contentDescription = "Scan QR Code",
+                    tint = Color.White
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End,
         containerColor = Color(0xFFF5F5F5)
     ) { paddingValues ->
         Column(
@@ -142,27 +158,44 @@ fun CourseDashboardScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppHeader(courseNameForTitle: String, teacherName: String, onBackClick: () -> Unit) {
-    TopAppBar(
-        title = { 
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF001E2F))
+            .padding(16.dp, 12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onBackClick() }
+            )
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
             Column {
-                Text(courseNameForTitle, fontWeight = FontWeight.Bold)
-                Text(teacherName, style = Typography.bodySmall, fontSize = 12.sp)
+                Text(
+                    text = courseNameForTitle,
+                    style = Typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                )
+                
+                Text(
+                    text = "Teacher: $teacherName",
+                    style = Typography.bodySmall.copy(
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                )
             }
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.Filled.ArrowBack, "Back", tint = Color.White)
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFF001E2F),
-            titleContentColor = Color.White,
-            navigationIconContentColor = Color.White
-        )
-    )
+        }
+    }
 }
 
 @Composable
@@ -379,6 +412,11 @@ private fun StudentAttendanceCalendarView(
 @Composable
 fun CourseDashboardScreenPreview() {
     MaterialTheme {
-        CourseDashboardScreen(courseName = "dummy_course_name", authToken = "dummy_auth_token")
+        CourseDashboardScreen(
+            courseName = "Cyber Security", 
+            teacherName = "Senayit Demisse",
+            authToken = "dummy_auth_token",
+            onScanClick = {}
+        )
     }
 }

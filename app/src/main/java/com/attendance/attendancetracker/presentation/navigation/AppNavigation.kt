@@ -156,7 +156,8 @@ fun AppNavigation(
                 courseName = courseName,
                 teacherName = teacherMap[courseName] ?: "",
                 authToken = token, // Pass the token
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onScanClick = { navController.navigate(Routes.qrScanner(courseName)) }
             )
         }
 
