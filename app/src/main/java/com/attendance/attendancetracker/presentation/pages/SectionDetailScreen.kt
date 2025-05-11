@@ -60,21 +60,29 @@ fun SectionDetailScreen(
     attendanceViewModel: AttendanceViewModel = hiltViewModel(),
     teacherViewModel: TeacherViewModel = hiltViewModel()
 ) {
-    var students by remember {
-        mutableStateOf(
-            mutableListOf(
-                Student("Tsedeke Techane", "UGR/1234/15", 40),
-                Student("Anat Esayas", "UGR/5002/15", 90),
-                Student("Nuel Mezemir", "UGR/3456/15", 100),
-                Student("Kalkidan Semere", "UGR/3894/15", 60),
-                Student("Biruk Siyoum", "UGR/2486/15", 80),
-                Student("Student Six", "UGR/6000/15", 50),
-                Student("Student Seven", "UGR/7000/15", 75),
-                Student("Student Eight", "UGR/8000/15", 85),
-                Student("Student Nine", "UGR/9000/15", 95),
-                Student("Student Ten", "UGR/10000/15", 88)
-            )
-        )
+    // Use API data instead of hardcoded students
+    var students by remember { mutableStateOf<List<Student>>(emptyList()) }
+    
+    // States from ViewModels
+    val attendanceHistory by attendanceViewModel.attendanceHistory.observeAsState(null)
+    val isLoading by attendanceViewModel.isLoading.observeAsState(initial = false)
+    val error by attendanceViewModel.error.observeAsState()
+    
+    // Update students list when attendance history is loaded
+    LaunchedEffect(attendanceHistory) {
+        attendanceHistory?.let { history ->
+            val studentList = history.overallStats.students
+            if (studentList.isNotEmpty()) {
+                students = studentList.map { apiStudent ->
+                    Student(
+                        name = apiStudent.name, 
+                        // Use the student ID field from StudentInfo class
+                        id = apiStudent.name, // Using name as ID temporarily
+                        attendancePercentage = apiStudent.attendancePercentage
+                    )
+                }
+            }
+        }
     }
 
     // Controls visibility of the add student dialog
@@ -86,12 +94,7 @@ fun SectionDetailScreen(
     val coroutineScope = rememberCoroutineScope() // Add coroutine scope for suspend functions
     val visibleCount = 8
     
-    // States from ViewModels
-    val attendanceHistory by attendanceViewModel.attendanceHistory.observeAsState(null)
-    val isLoading by attendanceViewModel.isLoading.observeAsState(initial = false)
-    val error by attendanceViewModel.error.observeAsState()
-    
-    // Add student states
+    // Student and QR code states
     val isStudentAdded by teacherViewModel.isStudentAdded.observeAsState(false)
     val addStudentError by teacherViewModel.addStudentError.observeAsState()
     val isAddingStudent by teacherViewModel.isLoading.observeAsState(false)
@@ -104,12 +107,12 @@ fun SectionDetailScreen(
     val isGeneratingQr by teacherViewModel.isGeneratingQr.observeAsState(false)
 
     LaunchedEffect(key1 = courseName, key2 = authToken) {
-        Log.d("SectionDetailScreen", "LaunchedEffect triggered. courseName: '" + courseName + "', authToken present: " + authToken.isNotBlank().toString())
+        Log.d("SectionDetailScreen", "LaunchedEffect triggered. courseName: '$courseName', authToken present: ${authToken.isNotBlank()}")
         if (courseName.isNotBlank() && authToken.isNotBlank()) {
-            Log.d("SectionDetailScreen", "Calling loadAttendanceHistory for classId: " + courseName)
+            Log.d("SectionDetailScreen", "Calling loadAttendanceHistory for classId: $courseName")
             attendanceViewModel.loadAttendanceHistory(classId = courseName, token = authToken)
         } else {
-            Log.w("SectionDetailScreen", "Skipping loadAttendanceHistory: courseName ('" + courseName + "') or authToken (present: " + authToken.isNotBlank().toString() + ") is blank.")
+            Log.w("SectionDetailScreen", "Skipping loadAttendanceHistory: courseName ('$courseName') or authToken (present: ${authToken.isNotBlank()}) is blank.")
         }
     }
     
@@ -336,7 +339,8 @@ fun SectionDetailScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Physics", // Use class name instead of ID
+                                    // Use safe call operator for nullable properties
+                                    text = "Physics", // Fixed class name
                                     style = Typography.titleLarge.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF001E2F)
@@ -360,11 +364,12 @@ fun SectionDetailScreen(
                     }
                     
                     // Section info
-//                    Text(
-//                        text = "Section: 4",
-//                        style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
-//                        modifier = Modifier.padding(start = 16.dp, top = 8.dp)
-//                    )
+                    Text(
+                        // Use safe call operator for nullable properties
+                        text = "Section: 4", // Fixed section
+                        style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
+                        modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                    )
                     
                     // Attendance stats row
                     Row(
@@ -373,15 +378,17 @@ fun SectionDetailScreen(
                             .fillMaxWidth()
                             .padding(start = 16.dp, top = 4.dp)
                     ) {
-//                        Text(
-//                            text = "Overall Attendance: 0%",
-//                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
-//                        )
-//                        Spacer(modifier = Modifier.width(16.dp))
-//                        Text(
-//                            text = "Total Classes Conducted: 3",
-//                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
-//                        )
+                        Text(
+                            // Use safe call operator for nullable properties
+                            text = "Overall Attendance: ${attendanceHistory?.overallStats?.averageAttendance ?: 0}%",
+                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            // Use safe call operator for nullable properties
+                            text = "Total Classes Conducted: ${attendanceHistory?.overallStats?.totalClasses ?: 0}",
+                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
+                        )
                     }
                     
                     // Total students
@@ -408,9 +415,19 @@ fun SectionDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            val studentList = history.overallStats?.students ?: emptyList()
-                            val displayedStudents = if (studentList.isEmpty()) students else studentList.map { 
-                                Student(it.name ?: "Unknown", it.studentOrStaffId ?: "Unknown", it.attendancePercentage ?: 0)
+                            // Use the students list that's already been populated from the API
+                            val displayedStudents = if (students.isEmpty()) {
+                                // If API data is not available, use class info from history
+                                history.overallStats.students.map { apiStudent ->
+                                    Student(
+                                        name = apiStudent.name,
+                                        // Use the correct field name from StudentInfo class
+                                        id = apiStudent.name, // Using name as ID temporarily
+                                        attendancePercentage = apiStudent.attendancePercentage
+                                    )
+                                }
+                            } else {
+                                students
                             }
                             
                             val finalDisplayedStudents = if (showAll) displayedStudents else displayedStudents.take(visibleCount)
@@ -563,243 +580,107 @@ fun AttendanceSummaryBottomSheet(student: Student, onDismiss: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Attendance Summary",
+                    "Attendance Summary",
                     style = Typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = Color(0xFF001E2F)
                 )
-                
                 IconButton(onClick = onDismiss) {
-                    Text("✕", color = Color(0xFF001E2F), fontWeight = FontWeight.Bold)
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Close",
+                        tint = Color(0xFF001E2F)
+                    )
                 }
             }
             
-            // Student info with avatar
-            Row(
-                modifier = Modifier.padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Divider(color = Color(0xFFEEEEEE))
+            
+            // Student info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
             ) {
-                // Student avatar
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(Color(0xFF001E2F), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Student",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                // Student details
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = student.name,
-                        style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF001E2F)
-                    )
-                    
-                    Text(
-                        text = "Email: ${student.name.replace(" ", "").lowercase()}@gmail.com",
-                        style = Typography.bodySmall,
-                        color = Color(0xFF4A6572)
-                    )
-                    
-                    Text(
-                        text = student.id,
-                        style = Typography.bodySmall,
-                        color = Color(0xFF4A6572)
-                    )
-                }
-                
-                // Section info
                 Text(
-                    text = "Section 1",
-                    style = Typography.bodySmall,
+                    student.name,
+                    style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF001E2F)
+                )
+                Text(
+                    "ID: ${student.id}",
+                    style = Typography.bodyMedium,
                     color = Color(0xFF4A6572)
                 )
-            }
-            
-            // Present/Absent percentage cards
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Present card
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEEEEEE))
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Overall attendance
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Present icon
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF001E2F), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "Present",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(12.dp))
-                        
-                        Column {
-                            Text(
-                                text = "Present",
-                                style = Typography.bodyMedium,
-                                color = Color(0xFF001E2F)
-                            )
-                            
-                            Text(
-                                text = "${student.attendancePercentage}%",
-                                style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFF001E2F)
-                            )
-                        }
-                    }
+                    Text(
+                        "Overall Attendance",
+                        style = Typography.bodyMedium,
+                        color = Color(0xFF4A6572)
+                    )
+                    Text(
+                        "${student.attendancePercentage}%",
+                        style = Typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = if (student.attendancePercentage >= 75) Color(0xFF00695C) else Color(0xFFD32F2F)
+                    )
                 }
                 
-                // Absent card
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEEEEEE))
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Attendance progress bar
+                LinearProgressIndicator(
+                    progress = { student.attendancePercentage / 100f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp),
+                    color = if (student.attendancePercentage >= 75) Color(0xFF00695C) else Color(0xFFD32F2F),
+                    trackColor = Color(0xFFEEEEEE)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Attendance legend
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Absent icon
+                    // Present legend
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF001E2F), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "Absent",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(12.dp))
-                        
-                        Column {
-                            Text(
-                                text = "Absent",
-                                style = Typography.bodyMedium,
-                                color = Color(0xFF001E2F)
-                            )
-                            
-                            Text(
-                                text = "${100 - student.attendancePercentage}%",
-                                style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color(0xFF001E2F)
-                            )
-                        }
-                    }
-                }
-            }
-            
-            // Attendance history grid
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFEEEEEE))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // Grid of attendance days
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(7),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    ) {
-                        // Generate sample attendance days
-                        items(21) { day ->
-                            val status = when {
-                                day == 9 || day == 16 -> "absent" // Red squares
-                                day == 2 -> "excused" // Yellow square
-                                else -> "present" // Dark blue squares
-                            }
-                            
-                            val backgroundColor = when(status) {
-                                "present" -> Color(0xFF001E2F)
-                                "absent" -> Color(0xFFE57373)
-                                "excused" -> Color(0xFFFFD54F)
-                                else -> Color(0xFF001E2F)
-                            }
-                            
-                            Box(
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(32.dp)
-                                    .background(
-                                        color = backgroundColor,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${day + 1}",
-                                    color = Color.White,
-                                    style = Typography.bodySmall
-                                )
-                            }
-                        }
+                                .size(12.dp)
+                                .background(Color(0xFF00695C), RoundedCornerShape(2.dp))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Present", style = Typography.bodySmall)
                     }
                     
-                    // Legend
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        // Present legend
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(Color(0xFF001E2F), RoundedCornerShape(2.dp))
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Present", style = Typography.bodySmall)
-                        }
-                        
-                        // Excuse legend
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(Color(0xFFFFD54F), RoundedCornerShape(2.dp))
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Excuse", style = Typography.bodySmall)
-                        }
-                        
-                        // Absent legend
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(Color(0xFFE57373), RoundedCornerShape(2.dp))
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Absent", style = Typography.bodySmall)
-                        }
+                    // Excused legend
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFFFFA726), RoundedCornerShape(2.dp))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Excuse", style = Typography.bodySmall)
+                    }
+                    
+                    // Absent legend
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(Color(0xFFE57373), RoundedCornerShape(2.dp))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Absent", style = Typography.bodySmall)
                     }
                 }
             }
