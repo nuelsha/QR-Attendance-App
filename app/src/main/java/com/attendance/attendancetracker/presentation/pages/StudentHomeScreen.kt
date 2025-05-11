@@ -15,6 +15,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,7 +34,7 @@ fun StudentHomeScreen(
     studentName: String = "",
     authToken: String,
     dashboardViewModel: DashboardViewModel = hiltViewModel(),
-    onCourseClick: (String) -> Unit = {},
+    onCourseClick: (classId: String, displayCourseName: String, teacherName: String) -> Unit = { _, _, _ -> },
     onScanClick: (String) -> Unit = {}
 ) {
     LaunchedEffect(key1 = authToken) {
@@ -129,24 +130,15 @@ fun StudentHomeScreen(
                     modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
                 )
             } else {
-                classes.chunked(2).forEach { rowItems ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        rowItems.forEach { classItem ->
-                            CourseCard(
-                                title = classItem.className,
-                                teacher = classItem.teacherId,
-                                modifier = Modifier.weight(1f),
-                                onCardClick = { onCourseClick(classItem.id) },
-                                onScanClick = { onScanClick(classItem.id) }
-                            )
-                        }
-                        if (rowItems.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f).padding(8.dp))
-                        }
-                    }
+                classes.forEach { classItem ->
+                    CourseCard(
+                        title = classItem.className,
+                        teacher = classItem.teacherName,
+                        onCardClick = {
+                            onCourseClick(classItem.id, classItem.className, classItem.teacherName)
+                        },
+                        onScanClick = { onScanClick(classItem.id) }
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }

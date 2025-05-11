@@ -49,26 +49,27 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseDashboardScreen(
-    courseName: String,
-    teacherName: String = "Senayit Demisse",
+    classId: String,
+    displayCourseName: String,
+    teacherName: String,
     authToken: String,
     onBackClick: () -> Unit = {},
-    onScanClick: () -> Unit = {}, // Added for QR scanning
+    onScanClick: () -> Unit = {}, 
     attendanceViewModel: AttendanceViewModel = hiltViewModel()
 ) {
     val studentAttendanceData by attendanceViewModel.studentAttendanceCalendarData.observeAsState()
     val isLoading by attendanceViewModel.isLoading.observeAsState(initial = false)
     val error by attendanceViewModel.error.observeAsState()
 
-    LaunchedEffect(key1 = courseName, key2 = authToken) {
-        if (courseName.isNotBlank() && authToken.isNotBlank()) {
-            attendanceViewModel.loadStudentAttendanceCalendar(classId = courseName, token = authToken)
+    LaunchedEffect(key1 = classId, key2 = authToken) {
+        if (classId.isNotBlank() && authToken.isNotBlank()) {
+            attendanceViewModel.loadStudentAttendanceCalendar(classId = classId, token = authToken)
         }
     }
 
     Scaffold(
         topBar = {
-            AppHeader(courseName, teacherName, onBackClick)
+            AppHeader(displayCourseName, teacherName, onBackClick)
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -413,7 +414,8 @@ private fun StudentAttendanceCalendarView(
 fun CourseDashboardScreenPreview() {
     MaterialTheme {
         CourseDashboardScreen(
-            courseName = "Cyber Security", 
+            classId = "CS101",
+            displayCourseName = "Cyber Security",
             teacherName = "Senayit Demisse",
             authToken = "dummy_auth_token",
             onScanClick = {}
