@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
@@ -261,12 +262,23 @@ fun SectionDetailScreen(
 
     Scaffold(
         floatingActionButton = {
-            // Floating action button to show the add student dialog
-            FloatingActionButton(
+            // Add New Student button to match the image
+            ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = Color(0xFF001E2F)
+                containerColor = Color.White,
+                contentColor = Color(0xFF001E2F),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                Text("+", color = Color.White, fontWeight = FontWeight.Bold)
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add",
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "Add New Student",
+                    style = Typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                )
             }
         },
         containerColor = Color(0xFFECECEC)
@@ -296,45 +308,88 @@ fun SectionDetailScreen(
                     .padding(16.dp)
                     .verticalScroll(scrollState)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF001E2F)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = courseName,
-                            style = Typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF001E2F)
+                Column(modifier = Modifier.padding(vertical = 16.dp)) {
+                    // Top row with back button, class name, and QR icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Back button
+                        Row { IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color(0xFF001E2F)
                             )
-                        )
-                        Text(
-                            text = "Total: ${students.size} Students",
-                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
-                        )
+                        }
+
+                            // Class name in the center
+                            Column(
+                                horizontalAlignment  = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Class:",
+                                    style = Typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF001E2F)
+                                    )
+                                )
+                                Text(
+                                    text = "Physics", // Use class name instead of ID
+                                    style = Typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF001E2F)
+                                    )
+                                )
+                            } }
+                        
+                        // QR code icon
+                        IconButton(onClick = { 
+                            teacherViewModel.generateQrCode(
+                                classId = courseName,
+                                token = authToken
+                            )
+                        }) {
+                            Image(
+                                painter = painterResource(id = R.drawable.gg_qr),
+                                contentDescription = "Generate QR",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
-                    IconButton(onClick = { 
-                        teacherViewModel.generateQrCode(
-                            classId = courseName,
-                            token = authToken
-                        )
-                    }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.gg_qr),
-                            contentDescription = "Generate QR",
-                            modifier = Modifier.size(24.dp)
-                        )
+                    
+                    // Section info
+//                    Text(
+//                        text = "Section: 4",
+//                        style = Typography.bodyMedium.copy(color = Color(0xFF4A6572)),
+//                        modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+//                    )
+                    
+                    // Attendance stats row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 4.dp)
+                    ) {
+//                        Text(
+//                            text = "Overall Attendance: 0%",
+//                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
+//                        )
+//                        Spacer(modifier = Modifier.width(16.dp))
+//                        Text(
+//                            text = "Total Classes Conducted: 3",
+//                            style = Typography.bodySmall.copy(color = Color(0xFF4A6572))
+//                        )
                     }
+                    
+                    // Total students
+                    Text(
+                        text = "Total: ${students.size} Students",
+                        style = Typography.bodySmall.copy(color = Color(0xFF4A6572)),
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
                 }
 
                 if (isLoading) {
@@ -347,51 +402,48 @@ fun SectionDetailScreen(
                     }
                 } else if (attendanceHistory != null) {
                     val history = attendanceHistory!!
-                    Column(horizontalAlignment = Alignment.Start) {
-                        // Display basic class info from response
-                        Text("Class: ${history.classInfo?.name ?: "Unknown"}", style = Typography.titleMedium)
-                        Text("Section: ${history.classInfo?.section ?: "Unknown"}", style = Typography.bodySmall)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Overall Attendance: ${history.overallStats?.averageAttendance ?: 0}%", style = Typography.bodySmall)
-                        Text("Total Classes Conducted: ${history.overallStats?.totalClasses ?: 0}", style = Typography.bodySmall)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Student Attendance:", style = Typography.titleMedium)
-                        val studentList = history.overallStats?.students ?: emptyList()
-                        if (studentList.isEmpty()) {
-                            Text("No student data available.", style = Typography.bodySmall)
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 300.dp) // Add a max height constraint
-                            ) {
-                                items(studentList) { student ->
-                                    Card(
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            val studentList = history.overallStats?.students ?: emptyList()
+                            val displayedStudents = if (studentList.isEmpty()) students else studentList.map { 
+                                Student(it.name ?: "Unknown", it.studentOrStaffId ?: "Unknown", it.attendancePercentage ?: 0)
+                            }
+                            
+                            val finalDisplayedStudents = if (showAll) displayedStudents else displayedStudents.take(visibleCount)
+                            
+                            finalDisplayedStudents.forEachIndexed { index, student ->
+                                StudentAttendanceItem(index + 1, student)
+                                if (index < finalDisplayedStudents.size - 1) {
+                                    Divider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        color = Color(0xFFEEEEEE)
+                                    )
+                                }
+                            }
+                            
+                            if (!showAll && displayedStudents.size > visibleCount) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                            .size(36.dp)
+                                            .background(Color(0xFF001E2F), CircleShape)
+                                            .clickable { showAll = true },
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Column(modifier = Modifier.padding(12.dp)) {
-                                            Text(
-                                                text = student.name ?: "Unknown",
-                                                style = Typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                                            )
-                                            Text(
-                                                text = "ID: ${student.studentOrStaffId ?: "Unknown"}",
-                                                style = Typography.bodySmall
-                                            )
-                                            Text(
-                                                text = "Email: ${student.email ?: "Unknown"}",
-                                                style = Typography.bodySmall
-                                            )
-                                            Text(
-                                                text = "Attendance: ${student.attendancePercentage}%",
-                                                style = Typography.bodySmall.copy(
-                                                    color = if (student.attendancePercentage >= 75) Color(0xFF001E2F) else Color(0xFF4A6572)
-                                                )
-                                            )
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Show More",
+                                            tint = Color.White
+                                        )
                                     }
                                 }
                             }
@@ -408,91 +460,40 @@ fun SectionDetailScreen(
 
                             displayedStudents.forEachIndexed { index, student ->
                                 StudentAttendanceItem(index + 1, student)
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
-
-                            if (!showAll && students.size > visibleCount) {
-                                IconButton(
-                                    onClick = { showAll = true },
-                                    modifier = Modifier
-                                        .align(Alignment.CenterHorizontally)
-                                        .padding(top = 8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = "Show More",
-                                        tint = Color(0xFF001E2F)
+                                if (index < displayedStudents.size - 1) {
+                                    Divider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        color = Color(0xFFEEEEEE)
                                     )
                                 }
                             }
 
-
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        "Fetched Attendance History",
-                        style = Typography.titleLarge.copy(color = Color(0xFF001E2F)),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    if (isLoading) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    } else if (error != null) {
-                        Card(modifier = Modifier.fillMaxWidth(),  colors = CardDefaults.cardColors(containerColor = Color(0xFFE57373))) {
-                            Text(
-                                text = "Error: $error",
-                                style = Typography.bodySmall.copy(color = Color(0xFF4A6572)),
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    } else if (attendanceHistory != null) {
-                        val history = attendanceHistory!!
-                        Card(modifier = Modifier.fillMaxWidth(),  colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Class: ${history.classInfo.name}", style = Typography.titleMedium)
-                                Text("Section: ${history.classInfo.section}", style = Typography.bodySmall)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("Overall Attendance: ${history.overallStats.averageAttendance}%", style = Typography.bodySmall)
-                                Text("Total Classes Conducted: ${history.overallStats.totalClasses}", style = Typography.bodySmall)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text("Student Breakdown:", style = Typography.titleMedium)
-                                if (history.overallStats.students.isEmpty()) {
-                                    Text("No student attendance data available from server.", style = Typography.bodySmall)
-                                } else {
-                                    LazyColumn(
-                                        modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)
+                            if (!showAll && students.size > visibleCount) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Color(0xFF001E2F), CircleShape)
+                                            .clickable { showAll = true },
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        items(history.overallStats.students) { student ->
-                                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                                Text(
-                                                    text = student.name,
-                                                    style = Typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
-                                                )
-                                                Text(
-                                                    text = "ID: ${student.studentOrStaffId} - Email: ${student.email}",
-                                                    style = Typography.bodySmall
-                                                )
-                                                Text(
-                                                    text = "Attendance: ${student.attendancePercentage ?: 0}%",
-                                                    style = Typography.bodySmall.copy(
-                                                        color = if ((student.attendancePercentage ?: 0) >= 75) Color(0xFF00695C) else Color(0xFFD32F2F)
-                                                    )
-                                                )
-                                                Divider(modifier = Modifier.padding(top = 4.dp))
-                                            }
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Show More",
+                                            tint = Color.White
+                                        )
                                     }
                                 }
                             }
                         }
-                    } else {
-                        Text("No attendance history loaded yet or data is unavailable.", style = Typography.bodySmall, modifier = Modifier.padding(16.dp))
                     }
+
+                    // Removed redundant attendance history section
 
                     Spacer(modifier = Modifier.height(80.dp))
                 }
@@ -510,13 +511,14 @@ fun StudentAttendanceItem(index: Int, student: Student) {
             .fillMaxWidth()
             .clickable { showBottomSheet = true },
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
             Text(
-                "$index. ${student.name}",
+                "$index.${student.name}", // Remove space after the dot to match image
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF001E2F)
+                color = Color(0xFF001E2F),
+                style = Typography.bodyLarge
             )
             Text(
                 student.id,
@@ -525,9 +527,10 @@ fun StudentAttendanceItem(index: Int, student: Student) {
             )
         }
         Text(
-            "${student.attendancePercentage}%",
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF001E2F)
+            "${student.attendancePercentage}% Present", // Add "Present" text as shown in image
+            fontWeight = FontWeight.Medium,
+            color = Color(0xFF001E2F),
+            style = Typography.bodyMedium
         )
     }
     
