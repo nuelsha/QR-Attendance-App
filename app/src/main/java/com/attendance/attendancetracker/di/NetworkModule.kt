@@ -17,8 +17,8 @@ import android.os.Build
 object NetworkModule {
 
     // Base URLs for different device types
-    private const val EMULATOR_BASE_URL = "http://10.0.2.2:1000/api/"
-    private const val PHYSICAL_DEVICE_BASE_URL = "http://10.5.90.220:1000/api/"
+    private const val EMULATOR_BASE_URL = "http://10.0.2.2:1000/"
+    private const val PHYSICAL_DEVICE_BASE_URL = "http://10.5.90.220:1000/"
 
     // Determine if running on emulator (this is a simplified check)
     private fun isEmulator(): Boolean {

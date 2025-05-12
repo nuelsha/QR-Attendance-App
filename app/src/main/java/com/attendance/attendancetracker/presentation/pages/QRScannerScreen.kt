@@ -152,16 +152,14 @@ fun QRScannerScreen(
                         tint = Color(0xFF001E2F)
                     )
                 }
-
+                
                 Text(
                     text = courseName,
-                    style = Typography.titleLarge.copy(
-                        color = Color(0xFF001E2F),
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = Typography.titleMedium.copy(color = Color(0xFF001E2F)),
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
-
+            
             // Teacher name
             Text(
                 text = "Teacher: $teacherName",
@@ -189,22 +187,27 @@ fun QRScannerScreen(
                         .background(Color.White, RoundedCornerShape(12.dp))
                 ) {
                     // Camera preview that processes QR codes
-                    CameraPreview(
-                        modifier = Modifier.fillMaxSize(),
-                        onQrCodeScanned = { qrToken, scannedClassId ->
-                            // Process the scanned QR code data
-                            if (authToken.isNotEmpty()) {
-                                // Use the scanned classId if current one is empty
-                                val targetClassId = if (classId.isNotEmpty()) classId else scannedClassId
-                                viewModel.scanAttendance(qrToken, targetClassId, authToken)
-                            } else {
-                                // Show an error if we don't have an auth token
-                                scanSuccess = false
-                                scanMessage = "Authentication error. Please login again."
-                                isQrCodeDetected = true
+                    if (hasCameraPermission) {
+                        CameraPreview(
+                            modifier = Modifier.fillMaxSize(),
+                            onQrCodeScanned = { token, scannedClassId ->
+                                Log.d("QRScannerScreen", "QR Code scanned - token: $token, classId: $scannedClassId, expected classId: $classId")
+                                // Process the scanned QR code data
+                                if (authToken.isNotEmpty()) {
+                                    // Use the scanned classId if current one is empty
+                                    val targetClassId = if (classId.isNotEmpty()) classId else scannedClassId
+                                    Log.d("QRScannerScreen", "Calling scanAttendance with token: $token, classId: $targetClassId")
+                                    viewModel.scanAttendance(token, targetClassId, authToken)
+                                } else {
+                                    Log.e("QRScannerScreen", "Authentication error - empty auth token")
+                                    // Show an error if we don't have an auth token
+                                    scanSuccess = false
+                                    scanMessage = "Authentication error. Please login again."
+                                    isQrCodeDetected = true
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                     
                     // Frame corners
                     Box(
@@ -361,7 +364,7 @@ fun QRScannerScreen(
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
-    onQrCodeScanned: (String, String) -> Unit = { _, _ -> }
+    onQrCodeScanned: (String, String) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
